@@ -42,7 +42,9 @@
        fish_add_path --prepend --global ~/.nix-profile/bin
      end
      fish_add_path --global ~/.local/bin
-     ''; };
+     devenv hook fish | source
+     ''; 
+  };
 
   home.packages = [
     pkgs.git
@@ -53,6 +55,7 @@
     pkgs.devenv
     pkgs.mosh
     pkgs.github-cli
+    pkgs.neovide
   ];
 
   xdg.configFile."nvim" = {
