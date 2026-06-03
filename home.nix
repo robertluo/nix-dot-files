@@ -35,6 +35,7 @@
     pkgs.git
     pkgs.jujutsu
     pkgs.bashInteractive
+    pkgs.ripgrep
   ];
 
   xdg.configFile."nvim" = {
