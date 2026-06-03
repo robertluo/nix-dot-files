@@ -7,34 +7,6 @@
 
   programs.home-manager.enable = true;
 
-  programs.zsh = {
-    enable = true;
-    enableCompletion = true;
-    autosuggestion.enable = true;
-    syntaxHighlighting.enable = true;
-    oh-my-zsh = {
-      enable = true;
-      plugins = [ "git" "z" ];
-      theme = "robbyrussell";
-    };
-    envExtra = ''
-      # Nix installer hook (if not already somewhere else)
-      if [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then
-        . "$HOME/.nix-profile/etc/profile.d/nix.sh"
-      elif [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
-        . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-      fi
-
-      # Then source HM session vars so home.sessionPath and sessionVariables apply
-      if [ -e "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
-        . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
-      fi
-     '';
-      initContent = ''
-        eval "$(devenv hook zsh)"
-      '';
-  };
-
   programs.neovim = {
     enable = true;
     defaultEditor = true;
@@ -47,6 +19,31 @@
     enable = true;
   };
 
+  programs.man = {
+    enable = true;
+    package = pkgs.man-db;
+  };
+
+  programs.fish = {
+    enable = true;
+    loginShellInit = ''
+     # Default system profile
+     if test -d /nix/var/nix/profiles/default/bin
+       fish_add_path --prepend --global /nix/var/nix/profiles/default/bin
+     end
+
+     # Per-user profile (standalone Nix or home-manager profile)
+     if test -d /nix/var/nix/profiles/per-user/$USER/profile/bin
+       fish_add_path --prepend --global /nix/var/nix/profiles/per-user/$USER/profile/bin
+     end
+
+     # Classic single-user symlink, if you still have it:
+     if test -d ~/.nix-profile/bin
+       fish_add_path --prepend --global ~/.nix-profile/bin
+     end
+     fish_add_path --global ~/.local/bin
+     ''; };
+
   home.packages = [
     pkgs.git
     pkgs.jujutsu
@@ -55,6 +52,7 @@
     pkgs.babashka
     pkgs.devenv
     pkgs.mosh
+    pkgs.github-cli
   ];
 
   xdg.configFile."nvim" = {
