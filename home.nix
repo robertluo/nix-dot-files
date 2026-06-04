@@ -56,6 +56,8 @@
     pkgs.mosh
     pkgs.github-cli
     pkgs.neovide
+    pkgs.ghostty-bin
+    pkgs.curl
   ];
 
   xdg.configFile."nvim" = {
