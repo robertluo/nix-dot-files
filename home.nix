@@ -46,6 +46,15 @@
      ''; 
   };
 
+  programs.ghostty = {
+    enable = true;
+    package = pkgs.ghostty-bin;
+    settings = {
+      font-size = 14;
+      background-opacity = 0.95;
+    };
+  };
+
   home.packages = [
     pkgs.git
     pkgs.jujutsu
