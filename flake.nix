@@ -3,19 +3,22 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nixpkgs-neovim.url = "github:NixOS/nixpkgs/832efc09b4caf6b4569fbf9dc01bec3082a00611";
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
  
-  outputs = {self, nixpkgs, home-manager, ...} :
+  outputs = {self, nixpkgs, nixpkgs-neovim, home-manager, ...} :
     let
       system = "aarch64-darwin";
       pkgs = import nixpkgs {inherit system;};
+      pkgs-neovim = import nixpkgs-neovim {inherit system;};
       username = "tianluo";
     in {
       homeConfigurations."${username}" = 
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
+          extraSpecialArgs = { inherit pkgs-neovim; };
           modules = [ ./home.nix ];
         };
     };

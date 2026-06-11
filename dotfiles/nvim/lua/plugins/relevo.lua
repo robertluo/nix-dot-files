@@ -134,7 +134,7 @@ return {
       options = {
         -- configure general options: vim.opt.<key>
         opt = {
-          spell = true, -- sets vim.opt.spell
+          spell = false, -- sets vim.opt.spell
           wrap = true, -- sets vim.opt.wrap
           guifont = "Fira Code:h15", -- neovide font family & size
         },
