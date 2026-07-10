@@ -68,6 +68,7 @@
     pkgs.neovide
     pkgs.ghostty-bin
     pkgs.curl
+    pkgs.doctl
   ];
 
   xdg.configFile."nvim" = {
