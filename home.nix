@@ -69,6 +69,10 @@
     pkgs.ghostty-bin
     pkgs.curl
     pkgs.doctl
+
+    pkgs.nixd
+    pkgs.deadnix
+    pkgs.statix
   ];
 
   xdg.configFile."nvim" = {
