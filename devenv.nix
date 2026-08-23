@@ -10,11 +10,8 @@
   git-hooks.hooks.update-readme = {
     enable = true;
     name = "Update Readme";
-    entry = ''
-      pi -p "Update README.md to reflect the current state of this repository. Read flake.nix, home.nix, devenv.nix, devenv.yaml, and the dotfiles/ directory structure. Write the updated content to README.md." --no-session
-    '';
+    entry = "update-readme";
     pass_filenames = false;
-    always_run = true;
   };
 
   # https://devenv.sh/languages/
