@@ -1,12 +1,20 @@
 { pkgs, lib, config, inputs, ... }:
 
 {
-  # https://devenv.sh/packages/
   packages = [
     pkgs.git
     pkgs.jq
     pkgs.pi-coding-agent
   ];
+
+  git-hooks.hooks.update-readme = {
+    enable = true;
+    name = "Update Readme";
+    entry = ''
+      pi -p "Update README.md to reflect the current state of this repository. Read flake.nix, home.nix, devenv.nix, devenv.yaml, and the dotfiles/ directory structure. Write the updated content to README.md." --no-session
+    '';
+    pass_filenames = false;
+  };
 
   # https://devenv.sh/languages/
   languages.nix.enable = true;
@@ -30,7 +38,7 @@
 
   # https://devenv.sh/basics/
   enterShell = ''
-    echo "Available scripts: apply, update, check, update-readme"
+    echo "Available scripts: apply, update, check"
   '';
 
   # See full reference at https://devenv.sh/reference/options/

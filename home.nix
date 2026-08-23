@@ -49,7 +49,13 @@
        fish_add_path --prepend --global ~/.nix-profile/bin
      end
      fish_add_path --global ~/.local/bin
-     devenv hook fish | source
+     # Save devenv hook to a persistent file so child shells can load it
+     mkdir -p ~/.cache/devenv
+     set _DEVENV_HOOK_FILE ~/.cache/devenv/hook.fish
+     devenv hook fish > $_DEVENV_HOOK_FILE
+     source $_DEVENV_HOOK_FILE
+     # Export so child fish shells (spawned by devenv) load the hook too
+     set -gx fish_user_config_path $_DEVENV_HOOK_FILE
      ''; 
   };
 
