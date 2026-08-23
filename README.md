@@ -1,77 +1,66 @@
-# ~/.nix — Home Manager Configuration
+# Nix Home Manager Configuration
 
-This repository contains my [Home Manager](https://github.com/nix-community/home-manager) configuration for macOS (Apple Silicon / `aarch64-darwin`), declaratively managing the shell environment, editor tooling, CLI packages, and dotfiles.
+Declarative macOS (Apple Silicon) environment managed via [Home Manager](https://github.com/nix-community/home-manager) and [devenv](https://devenv.sh/).
 
-## Inputs
+## Overview
 
-| Input | Source | Purpose |
-|---|---|---|
-| `nixpkgs` | `github:NixOS/nixpkgs/nixos-26.05` | Primary package set |
-| `home-manager` | `github:nix-community/home-manager/release-26.05` | Home Manager module system |
-| `nixpkgs-neovim` | `github:NixOS/nixpkgs/832efc09` | Pinned Neovim 0.11.2 |
+| Component       | Version / Source                                              |
+|-----------------|---------------------------------------------------------------|
+| nixpkgs         | `nixos-26.05`                                                 |
+| home-manager    | `release-26.05`                                               |
+| Neovim          | 0.11.2 (pinned via `nixpkgs-neovim` at commit `832efc09`)    |
+| Target system   | `aarch64-darwin`                                              |
+| Shell           | Fish (with Starship prompt)                                   |
+| Terminal        | Ghostty                                                       |
 
-## Structure
+## Directory Structure
 
 ```
-.
-├── flake.nix           # Flake entry point; defines home configuration
-├── home.nix            # Home Manager module (programs, packages, dotfiles)
-├── devenv.nix          # devenv dev-environment config (hooks, scripts)
-├── devenv.yaml         # devenv inputs (nixpkgs rolling, git-hooks.nix)
-├── README.md           # This file
+├── flake.nix          # Flake entry point; pins inputs and builds home config
+├── home.nix           # Home Manager module (programs, packages, dotfile symlinks)
+├── devenv.nix         # devenv dev environment (scripts, hooks, languages)
+├── devenv.yaml        # devenv inputs (rolling nixpkgs, git-hooks.nix)
 └── dotfiles/
-    └── nvim/           # Neovim config, symlinked to ~/.config/nvim
-        ├── init.lua    # Entry point (lazy.nvim bootstrap + require)
-        ├── lua/
-        │   ├── config/       # Core, keymaps, options
-        │   └── plugins/      # Lazy plugin specs
-        └── snippets/         # Language snippets (Go, Lua, Python, Rust, TS, etc.)
+    └── nvim/          # Neovim config (LazyVim-based), symlinked to ~/.config/nvim
+        ├── init.lua   # Main entry point
+        ├── lua/       # Custom plugins and community config
+        ├── snippets/  # VSCode-style snippets (clojure, lua, markdown, global)
+        └── ...
 ```
 
-## Key Configuration
-
-### Programs
-
-- **Shell:** Fish (primary) with bash available as fallback
-- **Terminal:** Ghostty (`ghostty-bin`) — font size 14, background opacity 0.95
-- **Editor:** Neovim 0.11.2 (pinned via separate `nixpkgs-neovim` input)
-- **GUI Editor:** Neovide
-
-### Packages
-
-git, jujutsu, ripgrep, babashka, devenv, mosh, GitHub CLI, curl, doctl, nixd, deadnix, statix
-
-### Neovim Plugins
-
-lazy.nvim, telescope, nvim-treesitter, nvim-lspconfig, nvim-cmp, nvim-autopairs, nvim-ts-autotag, nvim-treesitter-textobjects, nvim-tree-lua, gitsigns, nvim-web-devicons, dressing.nvim, which-key, indent-blankline, todo-comments, noice.nvim, lualine, nvim-navic, nvim-scrollbar, nvim-lightbulb, lspkind, friendly-snippets
-
-## Commands
-
-Enter the dev environment first:
+## Quick Start
 
 ```bash
+# Enter the dev environment
 devenv shell
+
+# Available scripts
+apply            # Apply home config (home-manager switch)
+update           # Refresh pinned flake inputs (nix flake update)
+check            # Validate config without applying (home-manager build)
+update-readme    # Regenerate this README via pi-coding-agent
 ```
 
-Then run:
+## Programs & Tools
 
-| Script | Command | Description |
-|---|---|---|
-| `apply` | `home-manager switch --flake .#tianluo` | Apply home config |
-| `update` | `nix flake update` | Refresh pinned inputs |
-| `check` | `home-manager build --flake .#tianluo` | Validate without applying |
-| `update-readme` | *(runs this script)* | Update this README |
+Configured in `home.nix`:
 
-## Pre-commit Hooks
+- **Shell**: Fish with Starship prompt
+- **Editor**: Neovim 0.11.2 (LazyVim framework, pinned separately to avoid drift)
+- **Terminal**: Ghostty
+- **Git tools**: git, gh, lazygit
+- **File utilities**: zoxide, eza, bat, fd, ripgrep, fzf, tree
+- **CLI**: jq, yq, starship, tmux
+- **Nix tooling**: nixfmt-rfc-style, deadnix, statix
 
-Configured via `devenv.nix` using `git-hooks.nix`:
+## Dotfiles
 
-- **shellcheck** — lint shell scripts
-- **statix** — lint Nix code
+The Neovim configuration under `dotfiles/nvim/` is symlinked into `~/.config/nvim` via `xdg.configFile`. It uses the [LazyVim](https://www.lazyvim.org/) distribution with custom plugins (`relevo`, `termux`) and language snippets.
 
 ## Conventions
 
-- Target platform is `aarch64-darwin` (Apple Silicon macOS)
-- `home.stateVersion` is `26.05`, matching the Home Manager release
+- Keep `home.stateVersion` in sync with the Home Manager release (`26.05`)
 - Neovim is pinned via a separate `nixpkgs-neovim` input to avoid version drift
-- The `.gitignore` excludes devenv/direnv/pre-commit local files (e.g. `.devenv*`, `.direnv`)
+- Fish is the primary shell; bash is available as a fallback
+- Ghostty is the default terminal emulator
+- The devenv environment provides convenience scripts and git hooks for workflow automation

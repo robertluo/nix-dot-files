@@ -11,14 +11,6 @@
     mdsh.enable = true;
   };
 
-  git-hooks.hooks.update-readme = {
-    enable = true;
-    name = "Update Readme";
-    entry = "update-readme";
-    language = "unsupported";
-    pass_filenames = false;
-  };
-
   # https://devenv.sh/languages/
   languages.nix.enable = true;
 
