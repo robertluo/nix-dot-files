@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Post-commit hook: regenerate README.md in the background after commits
-# that touch config files. Uses nix develop to get the devenv environment.
+# Post-commit hook: regenerate README.md after commits that touch config files.
+# Runs in the devenv environment, so scripts are available directly.
 
 set -euo pipefail
 
@@ -11,15 +11,10 @@ if ! git diff-tree --no-commit-id --name-only -r HEAD | grep -qE '(flake\.nix|ho
   exit 0
 fi
 
-# Run in background so the commit isn't blocked
-(
-  cd "$REPO_ROOT"
-  echo "[post-commit] Config files changed — regenerating README.md in background..."
+cd "$REPO_ROOT"
+echo "[post-commit] Config files changed — regenerating README.md..."
 
-  nix develop -c bash -c '
-    pi -p "Update README.md to reflect the current state of this repository. Read flake.nix, home.nix, devenv.nix, devenv.yaml, and the dotfiles/ directory structure. Write the updated content to README.md." --no-session
-    echo "[post-commit] README.md regenerated. Remember to amend your commit: git add README.md && git commit --amend --no-edit"
-  '
-) &
+update-readme
 
-exit 0
+echo "[post-commit] README.md regenerated. Amend your commit:"
+echo "  git add README.md && git commit --amend --no-edit"
