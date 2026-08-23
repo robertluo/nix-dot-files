@@ -11,7 +11,9 @@
     enable = true;
     name = "Update Readme";
     entry = "update-readme";
+    language = "unsupported";
     pass_filenames = false;
+    stages = ["pre-push"];
   };
 
   # https://devenv.sh/languages/
