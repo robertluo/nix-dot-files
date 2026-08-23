@@ -7,13 +7,16 @@
     pkgs.pi-coding-agent
   ];
 
+  git-hooks.hooks = {
+    mdsh.enable = true;
+  };
+
   git-hooks.hooks.update-readme = {
     enable = true;
     name = "Update Readme";
     entry = "update-readme";
     language = "unsupported";
     pass_filenames = false;
-    stages = ["pre-push"];
   };
 
   # https://devenv.sh/languages/
