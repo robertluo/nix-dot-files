@@ -14,7 +14,7 @@ It declaratively manages the shell environment, editor tooling, CLI packages, an
 Run `devenv shell` to enter the dev environment, then use:
 - `apply` — apply home config (`home-manager switch --flake .#tianluo`)
 - `update` — refresh pinned inputs (`nix flake update`)
-- `check` — validate config without applying (`nix build .#homeConfigurations...`)
+- `check` — validate config without applying (`home-manager build --flake .#tianluo`)
 
 ## Conventions
 - Target platform is `aarch64-darwin` (Apple Silicon macOS)
