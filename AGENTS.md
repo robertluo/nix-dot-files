@@ -10,8 +10,11 @@ It declaratively manages the shell environment, editor tooling, CLI packages, an
 - `dotfiles/nvim/` — Neovim config, symlinked into `~/.config/nvim`
 
 ## Commands
-- Activate: `home-manager switch --flake ~/.nix#tianluo`
-- Update inputs: `nix flake update`
+
+Run `devenv shell` to enter the dev environment, then use:
+- `apply` — apply home config (`home-manager switch --flake .#tianluo`)
+- `update` — refresh pinned inputs (`nix flake update`)
+- `check` — validate config without applying (`nix build .#homeConfigurations...`)
 
 ## Conventions
 - Target platform is `aarch64-darwin` (Apple Silicon macOS)
