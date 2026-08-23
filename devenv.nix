@@ -21,7 +21,7 @@
   '';
 
   scripts.check.exec = ''
-    nix build .#homeConfigurations.tianluo.homeConfigurations.tianluo
+    home-manager build --flake .#tianluo
   '';
 
   # https://devenv.sh/basics/
