@@ -10,7 +10,7 @@
     nixpkgs-neovim.url = "github:NixOS/nixpkgs/832efc09b4caf6b4569fbf9dc01bec3082a00611";
   };
  
-  outputs = {self, nixpkgs, nixpkgs-neovim, home-manager, ...} :
+  outputs = {nixpkgs, nixpkgs-neovim, home-manager, ...} :
     let
       system = "aarch64-darwin";
       pkgs = import nixpkgs {inherit system;};

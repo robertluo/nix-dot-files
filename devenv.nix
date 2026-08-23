@@ -1,4 +1,4 @@
-{ pkgs, lib, config, inputs, ... }:
+{ pkgs, ... }:
 
 {
   packages = [
@@ -6,10 +6,6 @@
     pkgs.jq
     pkgs.pi-coding-agent
   ];
-
-  git-hooks.hooks = {
-    mdsh.enable = true;
-  };
 
   # https://devenv.sh/languages/
   languages.nix.enable = true;

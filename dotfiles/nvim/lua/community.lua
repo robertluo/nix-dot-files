@@ -62,6 +62,7 @@ return {
   { import = "astrocommunity.pack.clojure" },
   { import = "astrocommunity.pack.json" },
   { import = "astrocommunity.pack.lua" },
+  { import = "astrocommunity.pack.nix" },
   -- ----------------------------------------------
 
   -- ----------------------------------------------

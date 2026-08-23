@@ -1,4 +1,4 @@
-{config, pkgs, pkgs-neovim, ...} :
+{pkgs, pkgs-neovim, ...} :
 
 {
   home.username = "tianluo";
