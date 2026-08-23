@@ -5,6 +5,12 @@
   home.homeDirectory = "/Users/tianluo";
   home.stateVersion = "26.05";
 
+  home.sessionVariables = {
+    LANG = "en_US.UTF-8";
+    LANGUAGE = "en_US:en";
+    LC_MESSAGES = "en_US.UTF-8";
+  };
+
   programs.home-manager.enable = true;
 
   programs.neovim = {
@@ -66,10 +72,10 @@
     pkgs.mosh
     pkgs.github-cli
     pkgs.neovide
-    pkgs.ghostty-bin
     pkgs.curl
     pkgs.doctl
 
+    #support nix's own flake development
     pkgs.nixd
     pkgs.deadnix
     pkgs.statix
