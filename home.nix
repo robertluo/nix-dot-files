@@ -49,7 +49,11 @@
        fish_add_path --prepend --global ~/.nix-profile/bin
      end
      fish_add_path --global ~/.local/bin
-     devenv hook fish | source
+
+     # Convenience aliases for home-manager
+     alias hm-apply='home-manager switch --flake .#tianluo'
+     alias hm-update='nix flake update'
+     alias hm-check='nix build .#homeConfigurations.tianluo.homeConfigurations.tianluo'
      ''; 
   };
 
