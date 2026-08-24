@@ -2,9 +2,11 @@
 
 {
   packages = [
-    pkgs.git
     pkgs.jq
-    pkgs.pi-coding-agent
+    #support nix's own flake development
+    pkgs.nixd
+    pkgs.deadnix
+    pkgs.statix
   ];
 
   # https://devenv.sh/languages/

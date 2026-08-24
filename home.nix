@@ -33,30 +33,7 @@
 
   programs.fish = {
     enable = true;
-    loginShellInit = ''
-     # Default system profile
-     if test -d /nix/var/nix/profiles/default/bin
-       fish_add_path --prepend --global /nix/var/nix/profiles/default/bin
-     end
-
-     # Per-user profile (standalone Nix or home-manager profile)
-     if test -d /nix/var/nix/profiles/per-user/$USER/profile/bin
-       fish_add_path --prepend --global /nix/var/nix/profiles/per-user/$USER/profile/bin
-     end
-
-     # Classic single-user symlink, if you still have it:
-     if test -d ~/.nix-profile/bin
-       fish_add_path --prepend --global ~/.nix-profile/bin
-     end
-     fish_add_path --global ~/.local/bin
-     # Save devenv hook to a persistent file so child shells can load it
-     mkdir -p ~/.cache/devenv
-     set _DEVENV_HOOK_FILE ~/.cache/devenv/hook.fish
-     devenv hook fish > $_DEVENV_HOOK_FILE
-     source $_DEVENV_HOOK_FILE
-     # Export so child fish shells (spawned by devenv) load the hook too
-     set -gx fish_user_config_path $_DEVENV_HOOK_FILE
-     ''; 
+    interactiveShellInit = "devenv hook fish | source";
   };
 
   programs.ghostty = {
@@ -81,10 +58,7 @@
     pkgs.curl
     pkgs.doctl
 
-    #support nix's own flake development
-    pkgs.nixd
-    pkgs.deadnix
-    pkgs.statix
+    pkgs.pi-coding-agent
   ];
 
   xdg.configFile."nvim" = {
