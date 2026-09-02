@@ -9,6 +9,7 @@ Declarative macOS (Apple Silicon) environment managed via [Home Manager](https:/
 | nixpkgs         | `nixos-unstable` (direct input)                                         |
 | home-manager    | via [omniflake](https://omniflake.com/docs/using) index                 |
 | Neovim          | held on the 0.11 series by an overlay from `nixpkgs-neovim` (`832efc09`) |
+| Emacs           | `emacs-macport` + Doom via `nix-doom-emacs-unstraightened`              |
 | Target system   | `aarch64-darwin`                                                        |
 | Shell           | Fish (bash available as a fallback)                                     |
 | Terminal        | Ghostty                                                                 |
@@ -21,11 +22,12 @@ Declarative macOS (Apple Silicon) environment managed via [Home Manager](https:/
 ├── devenv.nix         # devenv dev environment (scripts, languages)
 ├── devenv.yaml        # devenv inputs (rolling nixpkgs, git-hooks.nix)
 └── dotfiles/
-    └── nvim/          # Neovim config (LazyVim-based), symlinked to ~/.config/nvim
-        ├── init.lua   # Main entry point
-        ├── lua/       # Custom plugins and community config
-        ├── snippets/  # VSCode-style snippets (clojure, lua, markdown, global)
-        └── ...
+    ├── nvim/          # Neovim config (LazyVim-based), symlinked to ~/.config/nvim
+    │   ├── init.lua   # Main entry point
+    │   ├── lua/       # Custom plugins and community config
+    │   ├── snippets/  # VSCode-style snippets (clojure, lua, markdown, global)
+    │   └── ...
+    └── doom/          # Doom Emacs DOOMDIR (init.el, config.el, packages.el)
 ```
 
 ## Quick Start
@@ -49,6 +51,26 @@ restate the package list; a hand-kept copy only drifts.
 ## Dotfiles
 
 The Neovim configuration under `dotfiles/nvim/` is symlinked into `~/.config/nvim` via `xdg.configFile`. It uses the [LazyVim](https://www.lazyvim.org/) distribution with custom plugins (`relevo`, `termux`) and language snippets.
+
+## Emacs
+
+Doom Emacs, built by
+[nix-doom-emacs-unstraightened](https://github.com/marienz/nix-doom-emacs-unstraightened)
+around `emacs-macport` (the macOS-native port, so `Emacs.app` lands in
+`~/Applications/Home Manager Apps`). Nix resolves Doom's whole package set —
+there is no `doom sync` step and no `~/.emacs.d` checkout.
+
+The config lives in `dotfiles/doom/`, and *when* a change takes effect depends
+on which file you edit:
+
+| File          | Read at | To apply     |
+|---------------|---------|--------------|
+| `init.el`     | build   | `apply`      |
+| `packages.el` | build   | `apply`      |
+| `config.el`   | startup | restart Emacs |
+
+Because `doomDir` is a store path, new files must be `git add`ed before the
+flake can see them.
 
 ## Conventions
 

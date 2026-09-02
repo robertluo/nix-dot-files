@@ -27,13 +27,14 @@
           (_: _: { inherit (nixpkgs-neovim.legacyPackages.${system}) neovim-unwrapped; })
         ];
       };
-      # nixpkgs follows above, so this home-manager evaluates against ours
+      # nixpkgs follows above, so these evaluate against our package set
       home-manager = omniflake.flakes.home-manager;
+      doom-emacs = omniflake.flakes.nix-doom-emacs-unstraightened;
     in {
       homeConfigurations."${username}" = 
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
-          modules = [ ./home.nix ];
+          modules = [ ./home.nix doom-emacs.homeModule ];
         };
     };
 }

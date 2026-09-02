@@ -21,6 +21,14 @@
     vimdiffAlias = true;
   };
 
+  programs.doom-emacs = {
+    enable = true;
+    # emacs-mac(port) — the macOS-native build, wrapped with Doom by
+    # nix-doom-emacs-unstraightened (module wired in flake.nix)
+    emacs = pkgs.emacs-macport;
+    doomDir = ./dotfiles/doom;
+  };
+
   programs.bash = {
     enable = true;
   };
