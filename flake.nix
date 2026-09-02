@@ -10,23 +10,29 @@
     omniflake.url = "github:fzakaria/omniflake";
     omniflake.inputs.nixpkgs.follows = "nixpkgs";
 
-    #pin to nvim 11.2 - an exact revision, which the index cannot name
+    # nixpkgs ships exactly one neovim, and unstable is on the 0.12 series.
+    # This second nixpkgs exists only to supply neovim-unwrapped; the overlay
+    # below is the only place it is used.
     nixpkgs-neovim.url = "github:NixOS/nixpkgs/832efc09b4caf6b4569fbf9dc01bec3082a00611";
   };
 
   outputs = {nixpkgs, nixpkgs-neovim, omniflake, ...} :
     let
       system = "aarch64-darwin";
-      pkgs = import nixpkgs {inherit system;};
-      pkgs-neovim = import nixpkgs-neovim {inherit system;};
       username = "tianluo";
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [
+          # hold neovim on 0.11; everything else rides unstable
+          (_: _: { inherit (nixpkgs-neovim.legacyPackages.${system}) neovim-unwrapped; })
+        ];
+      };
       # nixpkgs follows above, so this home-manager evaluates against ours
       home-manager = omniflake.flakes.home-manager;
     in {
       homeConfigurations."${username}" = 
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
-          extraSpecialArgs = { inherit pkgs-neovim; };
           modules = [ ./home.nix ];
         };
     };

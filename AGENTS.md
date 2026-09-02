@@ -4,7 +4,7 @@ This is a Home Manager flake for macOS (aarch64-darwin), user "tianluo".
 It declaratively manages the shell environment, editor tooling, CLI packages, and dotfiles.
 
 ## Key files
-- `flake.nix` — Flake entry point; pins `nixpkgs` (nixos-unstable) and `nixpkgs-neovim` (commit 832efc09 → Neovim 0.11.2), and reaches `home-manager` through the `omniflake` index
+- `flake.nix` — Flake entry point; pins `nixpkgs` (nixos-unstable) and `nixpkgs-neovim` (commit 832efc09 → Neovim 0.11.6) applied as an overlay, and reaches `home-manager` through the `omniflake` index
 - `home.nix` — The actual Home Manager module (programs, packages, dotfile symlinks)
 - `devenv.nix` / `devenv.yaml` — devenv dev environment (git, jq, pi-coding-agent)
 - `dotfiles/nvim/` — Neovim config, symlinked into `~/.config/nvim`
@@ -26,6 +26,11 @@ Run `devenv shell` to enter the dev environment, then use:
   substitutes into indexed flakes, the second is an exact revision the index cannot name
 - `nix flake update` advances `home-manager` by advancing `omniflake`, whose index
   carries the pin — so the rev tracks omniflake's pinning cadence, not `master` tip
-- Neovim is pinned via a separate `nixpkgs-neovim` input to avoid version drift
+- Neovim is held on the 0.11 series by an overlay in `flake.nix` that takes
+  `neovim-unwrapped` from `nixpkgs-neovim`; `home.nix` sets no `package` and takes
+  no extra argument, so the pin lives entirely in the flake. nixpkgs has no
+  versioned neovim attribute (no `neovim_0_11`), so a second nixpkgs is the only
+  way onto a different series, and `nixos-25.11` — the sole named branch still on
+  0.11 — stopped receiving commits 2026-06-30, hence the frozen revision
 - Fish is the primary shell; bash is available as a fallback
 - Ghostty is the default terminal emulator

@@ -1,4 +1,4 @@
-{pkgs, pkgs-neovim, ...} :
+{pkgs, ...} :
 
 {
   home.username = "tianluo";
@@ -15,7 +15,6 @@
 
   programs.neovim = {
     enable = true;
-    package = pkgs-neovim.neovim-unwrapped;
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
