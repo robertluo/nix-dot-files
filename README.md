@@ -4,21 +4,21 @@ Declarative macOS (Apple Silicon) environment managed via [Home Manager](https:/
 
 ## Overview
 
-| Component       | Version / Source                                              |
-|-----------------|---------------------------------------------------------------|
-| nixpkgs         | `nixos-unstable` (direct input)                               |
-| home-manager    | via [omniflake](https://omniflake.com/docs/using) index       |
-| Neovim          | 0.11.2 (pinned via `nixpkgs-neovim` at commit `832efc09`)    |
-| Target system   | `aarch64-darwin`                                              |
-| Shell           | Fish (with Starship prompt)                                   |
-| Terminal        | Ghostty                                                       |
+| Component       | Version / Source                                                        |
+|-----------------|-------------------------------------------------------------------------|
+| nixpkgs         | `nixos-unstable` (direct input)                                         |
+| home-manager    | via [omniflake](https://omniflake.com/docs/using) index                 |
+| Neovim          | held on the 0.11 series by an overlay from `nixpkgs-neovim` (`832efc09`) |
+| Target system   | `aarch64-darwin`                                                        |
+| Shell           | Fish (bash available as a fallback)                                     |
+| Terminal        | Ghostty                                                                 |
 
 ## Directory Structure
 
 ```
 ├── flake.nix          # Flake entry point; pins nixpkgs + omniflake, builds home config
 ├── home.nix           # Home Manager module (programs, packages, dotfile symlinks)
-├── devenv.nix         # devenv dev environment (scripts, hooks, languages)
+├── devenv.nix         # devenv dev environment (scripts, languages)
 ├── devenv.yaml        # devenv inputs (rolling nixpkgs, git-hooks.nix)
 └── dotfiles/
     └── nvim/          # Neovim config (LazyVim-based), symlinked to ~/.config/nvim
@@ -43,15 +43,8 @@ update-readme    # Regenerate this README via pi-coding-agent
 
 ## Programs & Tools
 
-Configured in `home.nix`:
-
-- **Shell**: Fish with Starship prompt
-- **Editor**: Neovim 0.11.2 (LazyVim framework, pinned separately to avoid drift)
-- **Terminal**: Ghostty
-- **Git tools**: git, gh, lazygit
-- **File utilities**: zoxide, eza, bat, fd, ripgrep, fzf, tree
-- **CLI**: jq, yq, starship, tmux
-- **Nix tooling**: nixfmt-rfc-style, deadnix, statix
+Read `home.nix` — it is short and it is the source of truth. This file does not
+restate the package list; a hand-kept copy only drifts.
 
 ## Dotfiles
 
@@ -60,10 +53,11 @@ The Neovim configuration under `dotfiles/nvim/` is symlinked into `~/.config/nvi
 ## Conventions
 
 - Keep `home.stateVersion` in sync with the Home Manager release (`26.05`)
-- Neovim is pinned via a separate `nixpkgs-neovim` input to avoid version drift
+- Neovim is held back by an overlay in `flake.nix` that takes `neovim-unwrapped`
+  from `nixpkgs-neovim`; `home.nix` sets no package and knows nothing about the pin
 - Fish is the primary shell; bash is available as a fallback
 - Ghostty is the default terminal emulator
-- The devenv environment provides convenience scripts and git hooks for workflow automation
+- The devenv environment provides the convenience scripts above
 
 ## Flake inputs
 
@@ -83,7 +77,9 @@ flake, so `home-manager` evaluates against the same package set as everything el
 Two inputs stay direct:
 
 - `nixpkgs` — it is the input omniflake substitutes; it has to be declared to be followed
-- `nixpkgs-neovim` — an exact revision (`832efc09`), which the index cannot name
+- `nixpkgs-neovim` — an exact revision (`832efc09`), which the index cannot name.
+  nixpkgs carries no versioned neovim attribute, so a second nixpkgs is the only
+  way onto a different series; it is consumed solely by the overlay in `flake.nix`
 
 `nix flake update` now advances `home-manager` by advancing `omniflake`, whose
 index carries the pin. The revision tracks omniflake's pinning cadence rather
