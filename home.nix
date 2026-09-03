@@ -1,4 +1,4 @@
-{pkgs, ...} :
+{config, pkgs, ...} :
 
 {
   home.username = "tianluo";
@@ -24,6 +24,12 @@
   programs.doom-emacs = {
     enable = true;
     doomDir = ./dotfiles/doom;
+  };
+
+  services.emacs.enable = true;
+
+  launchd.agents.emacs.config.EnvironmentVariables = config.home.sessionVariables // {
+    TERMINFO_DIRS = "${config.home.profileDirectory}/share/terminfo:/usr/share/terminfo";
   };
 
   programs.bash = {

@@ -41,6 +41,22 @@ Run `devenv shell` to enter the dev environment, then use:
   package set built against stock emacs, so staying on stock keeps this config
   eligible for it — but that cache is not a substituter here, so `apply` still
   builds the package set locally
+- The Emacs daemon is a launchd agent (`services.emacs`), never started from a
+  shell. Emacs derives its socket dir as `${TMPDIR:-/tmp}/emacs$UID`, and client
+  and server each compute it from their own environment: started from the
+  devShell, which carries no `TMPDIR`, the daemon listened on `/tmp/emacs502`
+  while `emacsclient` — seeing macOS's per-user `/var/folders/…/T` — looked
+  elsewhere and reported "can't find socket". launchd agents run in the per-user
+  domain and get that same `TMPDIR`, so bare `emacsclient -t` finds them.
+  `programs.doom-emacs` wires `services.emacs.package` to the Doom-wrapped Emacs
+  on its own, given `provideEmacs` (default true)
+- Launchd agents do not source `hm-session-vars.sh`, so
+  `launchd.agents.emacs.config.EnvironmentVariables` hands the daemon
+  `home.sessionVariables` plus `TERMINFO_DIRS`. Without the latter a tty frame
+  in Ghostty dies on "Terminal type xterm-ghostty is not defined" — the entry
+  lives in the profile's `share/terminfo`, off the compiled-in ncurses path, and
+  the client's own environment does not help because the lookup happens in the
+  daemon
 - Doom's package set is resolved by Nix, never by `doom sync`. `dotfiles/doom/init.el`
   and `packages.el` are read at *build* time — changing them means `apply`.
   `config.el` is read at startup, so it only needs an Emacs restart
