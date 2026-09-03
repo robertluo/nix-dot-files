@@ -33,10 +33,14 @@ Run `devenv shell` to enter the dev environment, then use:
   versioned neovim attribute (no `neovim_0_11`), so a second nixpkgs is the only
   way onto a different series, and `nixos-25.11` — the sole named branch still on
   0.11 — stopped receiving commits 2026-06-30, hence the frozen revision
-- Emacs is `emacs-macport` (the macOS-native port) wrapped with Doom by
+- Emacs is nixpkgs' stock `emacs` (the NS/Cocoa build) wrapped with Doom by
   [nix-doom-emacs-unstraightened](https://github.com/marienz/nix-doom-emacs-unstraightened),
   reached through the omniflake index; its `homeModule` is added to the module
-  list in `flake.nix`, and `programs.doom-emacs` is configured in `home.nix`
+  list in `flake.nix`, and `programs.doom-emacs` sets no `emacs` in `home.nix`,
+  so the module's default applies. Unstraightened's Cachix only holds the Doom
+  package set built against stock emacs, so staying on stock keeps this config
+  eligible for it — but that cache is not a substituter here, so `apply` still
+  builds the package set locally
 - Doom's package set is resolved by Nix, never by `doom sync`. `dotfiles/doom/init.el`
   and `packages.el` are read at *build* time — changing them means `apply`.
   `config.el` is read at startup, so it only needs an Emacs restart
