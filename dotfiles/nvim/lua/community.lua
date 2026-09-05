@@ -63,6 +63,7 @@ return {
   { import = "astrocommunity.pack.json" },
   { import = "astrocommunity.pack.lua" },
   { import = "astrocommunity.pack.nix" },
+  { import = "astrocommunity.pack.lean" },
   -- ----------------------------------------------
 
   -- ----------------------------------------------
