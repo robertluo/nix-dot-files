@@ -9,7 +9,7 @@ Declarative macOS (Apple Silicon) environment managed via [Home Manager](https:/
 | nixpkgs         | `nixos-unstable` (direct input)                                         |
 | home-manager    | via [omniflake](https://omniflake.com/docs/using) index                 |
 | Neovim          | held on the 0.11 series by an overlay from `nixpkgs-neovim` (`832efc09`) |
-| devenv          | held on 2.2.0 by an overlay from `nixpkgs-devenv` (`b5a865a8`)           |
+| devenv          | held on 2.2.2 by an overlay from `nixpkgs-devenv` (`aa88e342`)           |
 | Emacs           | stock `emacs` (NS/Cocoa) + Doom via `nix-doom-emacs-unstraightened`     |
 | Target system   | `aarch64-darwin`                                                        |
 | Shell           | Fish (bash available as a fallback)                                     |
@@ -21,7 +21,7 @@ Declarative macOS (Apple Silicon) environment managed via [Home Manager](https:/
 ├── flake.nix          # Flake entry point; pins nixpkgs + omniflake, builds home config
 ├── home.nix           # Home Manager module (programs, packages, dotfile symlinks)
 ├── devenv.nix         # devenv dev environment (scripts, languages)
-├── devenv.yaml        # devenv inputs (rolling nixpkgs, git-hooks.nix, modules pinned to 2.2.0)
+├── devenv.yaml        # devenv inputs (rolling nixpkgs, git-hooks.nix, modules pinned to 2.2.2)
 └── dotfiles/
     ├── nvim/          # Neovim config (LazyVim-based), symlinked to ~/.config/nvim
     │   ├── init.lua   # Main entry point
@@ -84,7 +84,7 @@ flake can see them.
 - Keep `home.stateVersion` in sync with the Home Manager release (`26.05`)
 - Neovim is held back by an overlay in `flake.nix` that takes `neovim-unwrapped`
   from `nixpkgs-neovim`; `home.nix` sets no package and knows nothing about the pin
-- devenv is held on 2.2.0 the same way — 2.3.1 regressed — by an overlay taking
+- devenv is held on 2.2.2 the same way — 2.3.1 regressed — by an overlay taking
   `devenv` from `nixpkgs-devenv`; `home.nix` still just lists `pkgs.devenv`.
   `devenv.yaml` pins the matching module set, which otherwise tracks devenv's
   main branch and drifts ahead of the CLI
@@ -113,8 +113,8 @@ Three inputs stay direct:
 - `nixpkgs-neovim` — an exact revision (`832efc09`), which the index cannot name.
   nixpkgs carries no versioned neovim attribute, so a second nixpkgs is the only
   way onto a different series; it is consumed solely by the overlay in `flake.nix`
-- `nixpkgs-devenv` — an exact revision (`b5a865a8`), the last master commit before
-  the `2.2.0 -> 2.2.1` bump; likewise consumed solely by an overlay
+- `nixpkgs-devenv` — an exact revision (`aa88e342`), the last master commit before
+  the `2.2.2 -> 2.3.0` bump; likewise consumed solely by an overlay
 
 `nix flake update` now advances `home-manager` by advancing `omniflake`, whose
 index carries the pin. The revision tracks omniflake's pinning cadence rather

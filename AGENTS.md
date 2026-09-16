@@ -4,7 +4,7 @@ This is a Home Manager flake for macOS (aarch64-darwin), user "tianluo".
 It declaratively manages the shell environment, editor tooling, CLI packages, and dotfiles.
 
 ## Key files
-- `flake.nix` — Flake entry point; pins `nixpkgs` (nixos-unstable), `nixpkgs-neovim` (commit 832efc09 → Neovim 0.11.6) and `nixpkgs-devenv` (commit b5a865a8 → devenv 2.2.0), the latter two applied as overlays, and reaches `home-manager` and `nix-doom-emacs-unstraightened` through the `omniflake` index
+- `flake.nix` — Flake entry point; pins `nixpkgs` (nixos-unstable), `nixpkgs-neovim` (commit 832efc09 → Neovim 0.11.6) and `nixpkgs-devenv` (commit aa88e342 → devenv 2.2.2), the latter two applied as overlays, and reaches `home-manager` and `nix-doom-emacs-unstraightened` through the `omniflake` index
 - `home.nix` — The actual Home Manager module (programs, packages, dotfile symlinks)
 - `devenv.nix` / `devenv.yaml` — devenv dev environment (git, jq, pi-coding-agent)
 - `dotfiles/nvim/` — Neovim config, symlinked into `~/.config/nvim`
@@ -34,21 +34,23 @@ Run `devenv shell` to enter the dev environment, then use:
   versioned neovim attribute (no `neovim_0_11`), so a second nixpkgs is the only
   way onto a different series, and `nixos-25.11` — the sole named branch still on
   0.11 — stopped receiving commits 2026-06-30, hence the frozen revision
-- devenv is held on 2.2.0 by the same mechanism — unstable's 2.3.1 carries a
+- devenv is held on 2.2.2 by the same mechanism — unstable's 2.3.1 carries a
   regression — an overlay in `flake.nix` takes `devenv` from `nixpkgs-devenv`,
-  so `home.nix` keeps its plain `pkgs.devenv`. b5a865a8 is the last master
-  commit before nixpkgs bumped 2.2.0 -> 2.2.1, and its `devenv` closure is fully
+  so `home.nix` keeps its plain `pkgs.devenv`. aa88e342 is the last master
+  commit before nixpkgs bumped 2.2.2 -> 2.3.0, and its `devenv` closure is fully
   substitutable from cache.nixos.org on aarch64-darwin. To move the pin, find
   the commit that bumped past the wanted version
   (`gh api "repos/NixOS/nixpkgs/commits?path=pkgs/by-name/de/devenv/package.nix"`)
   and take its parent
 - The CLI pin has a second half in `devenv.yaml`: the `devenv` input (the module
   set in `src/modules`) is unpinned by default and tracks the repo's main
-  branch, so it drifts ahead of a held-back CLI. It is pinned to 81ab9b8, which
-  is the `v2.2` tag plus the single commit bumping `src/modules/latest-version`
-  to 2.2.0. The tag itself is the wrong target: its `latest-version` still reads
-  2.1.2, and every devenv run then nags that the CLI is newer than its input.
-  Repin both halves together
+  branch, so it drifts ahead of a held-back CLI. It is pinned to c972cb4, the
+  commit that bumps `src/modules/latest-version` to 2.2.2. The matching `v2.2.2`
+  tag is the wrong target: its `latest-version` still reads 2.2.1, and
+  `update-check.nix` then nags on every shell entry that the CLI is newer than
+  its input. The bump lands whenever the release automation next runs, not with
+  the tag — for 2.2.2 that was 39 commits later, so the module set carries a few
+  post-release fixes the 2.2.2 CLI never shipped with. Repin both halves together
 - Emacs is nixpkgs' stock `emacs` (the NS/Cocoa build) wrapped with Doom by
   [nix-doom-emacs-unstraightened](https://github.com/marienz/nix-doom-emacs-unstraightened),
   reached through the omniflake index; its `homeModule` is added to the module

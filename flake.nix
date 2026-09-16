@@ -15,9 +15,9 @@
     # below is the only place it is used.
     nixpkgs-neovim.url = "github:NixOS/nixpkgs/832efc09b4caf6b4569fbf9dc01bec3082a00611";
 
-    # Same trick for devenv, held on 2.2.0: unstable's 2.3.1 carries a
-    # regression. This is the last master commit before the 2.2.0 -> 2.2.1 bump.
-    nixpkgs-devenv.url = "github:NixOS/nixpkgs/b5a865a8a4069922f4cf60b8a1f4e1138e8062e7";
+    # Same trick for devenv, held on 2.2.2: unstable's 2.3.1 carries a
+    # regression. This is the last master commit before the 2.2.2 -> 2.3.0 bump.
+    nixpkgs-devenv.url = "github:NixOS/nixpkgs/aa88e342b757ea13a06cb6f7fc8c00a8e1d2bb64";
   };
 
   outputs = {nixpkgs, nixpkgs-neovim, nixpkgs-devenv, omniflake, ...} :
@@ -29,7 +29,7 @@
         overlays = [
           # hold neovim on 0.11; everything else rides unstable
           (_: _: { inherit (nixpkgs-neovim.legacyPackages.${system}) neovim-unwrapped; })
-          # hold devenv on 2.2.0
+          # hold devenv on 2.2.2
           (_: _: { inherit (nixpkgs-devenv.legacyPackages.${system}) devenv; })
         ];
       };

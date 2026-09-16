@@ -68,8 +68,6 @@
     pkgs.curl
     pkgs.doctl
     pkgs.tmux
-
-    pkgs.pi-coding-agent
   ];
 
   xdg.configFile."nvim" = {
