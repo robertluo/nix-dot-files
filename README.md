@@ -10,7 +10,7 @@ Declarative macOS (Apple Silicon) environment managed via [Home Manager](https:/
 | home-manager    | via [omniflake](https://omniflake.com/docs/using) index                 |
 | Neovim          | held on the 0.11 series by an overlay from `nixpkgs-neovim` (`832efc09`) |
 | devenv          | held on 2.2.0 by an overlay from `nixpkgs-devenv` (`b5a865a8`)           |
-| Emacs           | `emacs-macport` + Doom via `nix-doom-emacs-unstraightened`              |
+| Emacs           | stock `emacs` (NS/Cocoa) + Doom via `nix-doom-emacs-unstraightened`     |
 | Target system   | `aarch64-darwin`                                                        |
 | Shell           | Fish (bash available as a fallback)                                     |
 | Terminal        | Ghostty                                                                 |
@@ -57,9 +57,15 @@ The Neovim configuration under `dotfiles/nvim/` is symlinked into `~/.config/nvi
 
 Doom Emacs, built by
 [nix-doom-emacs-unstraightened](https://github.com/marienz/nix-doom-emacs-unstraightened)
-around `emacs-macport` (the macOS-native port, so `Emacs.app` lands in
-`~/Applications/Home Manager Apps`). Nix resolves Doom's whole package set —
-there is no `doom sync` step and no `~/.emacs.d` checkout.
+around nixpkgs' stock `emacs` (the NS/Cocoa build, so `Emacs.app` lands in
+`~/Applications/Home Manager Apps`). `programs.doom-emacs` sets no `emacs`, so
+the module's default applies — and staying on stock is what keeps this config
+eligible for unstraightened's Cachix, which only holds the Doom package set
+built against stock emacs. Nix resolves Doom's whole package set — there is no
+`doom sync` step and no `~/.emacs.d` checkout.
+
+The daemon runs as a launchd agent (`services.emacs`), never from a shell; see
+AGENTS.md for why that distinction matters.
 
 The config lives in `dotfiles/doom/`, and *when* a change takes effect depends
 on which file you edit:
