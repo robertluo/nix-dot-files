@@ -4,6 +4,13 @@ inputs:
     url: github:cachix/devenv-nixpkgs/rolling
   git-hooks:
     url: github:cachix/git-hooks.nix
+  # Modules pinned to the same release as the CLI (held on 2.2.0 in flake.nix);
+  # left unpinned this tracks devenv's main branch and drifts ahead of it.
+  # Not the v2.2 tag: that tag's src/modules/latest-version still reads 2.1.2,
+  # which makes every devenv run nag about being out of sync. 81ab9b8 is that
+  # tag plus the one commit that bumps the file to 2.2.0, and nothing else.
+  devenv:
+    url: github:cachix/devenv/81ab9b8fffc8ec352f4a72eb49b41ef93766aceb?dir=src/modules
 
 # If you're using non-OSS software, you can set allow_unfree to true.
 # allow_unfree: true
