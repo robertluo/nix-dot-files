@@ -18,9 +18,23 @@
     # Same trick for devenv, held on 2.2.2: unstable's 2.3.1 carries a
     # regression. This is the last master commit before the 2.2.2 -> 2.3.0 bump.
     nixpkgs-devenv.url = "github:NixOS/nixpkgs/aa88e342b757ea13a06cb6f7fc8c00a8e1d2bb64";
+
+    # Jolt, a Clojure on Chez Scheme. The omniflake index does not carry it, so
+    # it is a direct input. Two details are load-bearing:
+    #   - the URL must be git+https with ?submodules=1. Jolt vendors its Scheme
+    #     dependencies (irregex, sci, fs, process, grenadine) as git submodules,
+    #     and the github: fetcher reads the tarball API, which omits them — the
+    #     vendor/ directories arrive empty and the build dies on a missing
+    #     vendor/irregex/irregex.scm.
+    #   - nix.conf must enable the flake-self-attrs experimental feature, since
+    #     Jolt's own flake sets inputs.self.submodules. Lix gates that attribute,
+    #     and locking this input evaluates it, so the feature is required here
+    #     and not only when building Jolt directly.
+    jolt.url = "git+https://github.com/jolt-lang/jolt?submodules=1";
+    jolt.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = {nixpkgs, nixpkgs-neovim, nixpkgs-devenv, omniflake, ...} :
+  outputs = {nixpkgs, nixpkgs-neovim, nixpkgs-devenv, omniflake, jolt, ...} :
     let
       system = "aarch64-darwin";
       username = "tianluo";
@@ -31,6 +45,9 @@
           (_: _: { inherit (nixpkgs-neovim.legacyPackages.${system}) neovim-unwrapped; })
           # hold devenv on 2.2.2
           (_: _: { inherit (nixpkgs-devenv.legacyPackages.${system}) devenv; })
+          # nixpkgs has no jolt; surface the flake's package so home.nix can
+          # list a plain pkgs.jolt, like the pinned packages above
+          (_: _: { jolt = jolt.packages.${system}.default; })
         ];
       };
       # nixpkgs follows above, so these evaluate against our package set

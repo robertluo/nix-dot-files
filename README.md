@@ -11,6 +11,7 @@ Declarative macOS (Apple Silicon) environment managed via [Home Manager](https:/
 | Neovim          | held on the 0.11 series by an overlay from `nixpkgs-neovim` (`832efc09`) |
 | devenv          | held on 2.2.2 by an overlay from `nixpkgs-devenv` (`aa88e342`)           |
 | Emacs           | stock `emacs` (NS/Cocoa) + Doom via `nix-doom-emacs-unstraightened`     |
+| Jolt            | direct input `git+https://github.com/jolt-lang/jolt?submodules=1`       |
 | Target system   | `aarch64-darwin`                                                        |
 | Shell           | Fish (bash available as a fallback)                                     |
 | Terminal        | Ghostty                                                                 |
@@ -18,7 +19,7 @@ Declarative macOS (Apple Silicon) environment managed via [Home Manager](https:/
 ## Directory Structure
 
 ```
-├── flake.nix          # Flake entry point; pins nixpkgs + omniflake, builds home config
+├── flake.nix          # Flake entry point; pins nixpkgs + omniflake + jolt, builds home config
 ├── home.nix           # Home Manager module (programs, packages, dotfile symlinks)
 ├── devenv.nix         # devenv dev environment (scripts, languages)
 ├── devenv.yaml        # devenv inputs (rolling nixpkgs, git-hooks.nix, modules pinned to 2.2.2)
@@ -107,7 +108,7 @@ home-manager = omniflake.flakes.home-manager;
 The `follows` line makes our `nixpkgs` the one substituted into every indexed
 flake, so `home-manager` evaluates against the same package set as everything else.
 
-Three inputs stay direct:
+Four inputs stay direct:
 
 - `nixpkgs` — it is the input omniflake substitutes; it has to be declared to be followed
 - `nixpkgs-neovim` — an exact revision (`832efc09`), which the index cannot name.
@@ -115,7 +116,40 @@ Three inputs stay direct:
   way onto a different series; it is consumed solely by the overlay in `flake.nix`
 - `nixpkgs-devenv` — an exact revision (`aa88e342`), the last master commit before
   the `2.2.2 -> 2.3.0` bump; likewise consumed solely by an overlay
+- `jolt` — the omniflake index does not carry it, so there is nothing to reach
+  through. Like the two pins above it is consumed only by an overlay, which
+  surfaces its flake package as `pkgs.jolt`
 
 `nix flake update` now advances `home-manager` by advancing `omniflake`, whose
 index carries the pin. The revision tracks omniflake's pinning cadence rather
 than the tip of `master`.
+
+### Jolt, submodules, and `flake-self-attrs`
+
+[Jolt](https://jolt-lang.net) is a Clojure implementation on Chez Scheme. Two
+details of its input are load-bearing, and both fail confusingly when missed.
+
+The URL must be the `git+https` form with `?submodules=1`:
+
+```nix
+inputs.jolt.url = "git+https://github.com/jolt-lang/jolt?submodules=1";
+```
+
+`github:jolt-lang/jolt` does *not* work. Jolt vendors its Scheme dependencies
+(irregex, sci, fs, process, grenadine) as git submodules, and the `github:`
+fetcher reads GitHub's tarball API, which omits submodules — the `vendor/`
+directories arrive empty and the build fails on a missing
+`vendor/irregex/irregex.scm`.
+
+Separately, `~/.config/nix/nix.conf` must enable the `flake-self-attrs`
+experimental feature:
+
+```
+experimental-features = nix-command flakes flake-self-attrs
+```
+
+Jolt's own flake sets `inputs.self.submodules`, an attribute Lix gates behind
+that feature. Merely *locking* the input evaluates it, so without the feature
+`apply` and `check` fail outright — not just builds of Jolt. This is the only
+requirement in this repo that lives outside it, so a fresh machine needs the
+line before its first `apply`.

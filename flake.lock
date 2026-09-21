@@ -51,6 +51,46 @@
         "type": "github"
       }
     },
+    "jolt": {
+      "inputs": {
+        "makes": "makes",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789973080,
+        "narHash": "sha256-6thORndH4U/dFJT2QSCIsdzxpTT6PvJK+cNeAZ8J9Zw=",
+        "ref": "refs/heads/main",
+        "rev": "9786b7faf65fac5871f62081380b7038d6a83cc0",
+        "revCount": 3551,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/jolt-lang/jolt"
+      },
+      "original": {
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/jolt-lang/jolt"
+      }
+    },
+    "makes": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785480273,
+        "narHash": "sha256-/g8O4PW0v3NNChKyrWw/EqpEAUCKiI9/KFE2EiXoUlA=",
+        "owner": "makeplus",
+        "repo": "makes",
+        "rev": "d14cb578c2f04e6f9d00e01c7c4e416a9baf94e9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "makeplus",
+        "repo": "makes",
+        "rev": "d14cb578c2f04e6f9d00e01c7c4e416a9baf94e9",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1789286504,
@@ -140,6 +180,7 @@
     },
     "root": {
       "inputs": {
+        "jolt": "jolt",
         "nixpkgs": "nixpkgs",
         "nixpkgs-devenv": "nixpkgs-devenv",
         "nixpkgs-neovim": "nixpkgs-neovim",

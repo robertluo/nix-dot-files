@@ -61,6 +61,7 @@
     pkgs.bashInteractive
     pkgs.ripgrep
     pkgs.babashka
+    pkgs.jolt
     pkgs.devenv
     pkgs.mosh
     pkgs.github-cli

@@ -4,7 +4,7 @@ This is a Home Manager flake for macOS (aarch64-darwin), user "tianluo".
 It declaratively manages the shell environment, editor tooling, CLI packages, and dotfiles.
 
 ## Key files
-- `flake.nix` — Flake entry point; pins `nixpkgs` (nixos-unstable), `nixpkgs-neovim` (commit 832efc09 → Neovim 0.11.6) and `nixpkgs-devenv` (commit aa88e342 → devenv 2.2.2), the latter two applied as overlays, and reaches `home-manager` and `nix-doom-emacs-unstraightened` through the `omniflake` index
+- `flake.nix` — Flake entry point; pins `nixpkgs` (nixos-unstable), `nixpkgs-neovim` (commit 832efc09 → Neovim 0.11.6) and `nixpkgs-devenv` (commit aa88e342 → devenv 2.2.2), the latter two applied as overlays, reaches `home-manager` and `nix-doom-emacs-unstraightened` through the `omniflake` index, and takes `jolt` as a direct input surfaced through a third overlay
 - `home.nix` — The actual Home Manager module (programs, packages, dotfile symlinks)
 - `devenv.nix` / `devenv.yaml` — devenv dev environment (git, jq, pi-coding-agent)
 - `dotfiles/nvim/` — Neovim config, symlinked into `~/.config/nvim`
@@ -23,9 +23,10 @@ Run `devenv shell` to enter the dev environment, then use:
 - Third-party flakes come from [omniflake](https://omniflake.com/docs/using) as
   `omniflake.flakes.<name>`, not direct inputs. `omniflake.inputs.nixpkgs.follows = "nixpkgs"`
   makes every indexed flake evaluate against our `nixpkgs`
-- `nixpkgs`, `nixpkgs-neovim` and `nixpkgs-devenv` stay direct inputs: the first is
-  the one omniflake substitutes into indexed flakes, the other two are exact
-  revisions the index cannot name
+- `nixpkgs`, `nixpkgs-neovim`, `nixpkgs-devenv` and `jolt` stay direct inputs: the
+  first is the one omniflake substitutes into indexed flakes, the next two are
+  exact revisions the index cannot name, and the last is simply absent from the
+  index
 - `nix flake update` advances `home-manager` by advancing `omniflake`, whose index
   carries the pin — so the rev tracks omniflake's pinning cadence, not `master` tip
 - Neovim is held on the 0.11 series by an overlay in `flake.nix` that takes
@@ -51,6 +52,21 @@ Run `devenv shell` to enter the dev environment, then use:
   its input. The bump lands whenever the release automation next runs, not with
   the tag — for 2.2.2 that was 39 commits later, so the module set carries a few
   post-release fixes the 2.2.2 CLI never shipped with. Repin both halves together
+- [Jolt](https://jolt-lang.net) (Clojure on Chez Scheme) is a direct input because
+  the omniflake index does not carry it, and an overlay in `flake.nix` exposes its
+  flake package so `home.nix` lists a plain `pkgs.jolt`. Two details are
+  load-bearing, and both fail confusingly when missed:
+  - the URL is `git+https://github.com/jolt-lang/jolt?submodules=1`, never
+    `github:jolt-lang/jolt`. Jolt vendors its Scheme dependencies (irregex, sci,
+    fs, process, grenadine) as git submodules, and the `github:` fetcher reads
+    GitHub's tarball API, which omits them — the `vendor/` directories arrive
+    empty and the build dies on a missing `vendor/irregex/irregex.scm`
+  - `~/.config/nix/nix.conf` must enable the `flake-self-attrs` experimental
+    feature, because Jolt's own flake sets `inputs.self.submodules`. Lix gates
+    that attribute, and merely *locking* this input evaluates it, so the feature
+    is a prerequisite for `apply` and `check` at all, not just for building Jolt
+    directly. It is the one requirement here that lives outside the repo, so a
+    fresh machine needs it set before the first `apply`
 - Emacs is nixpkgs' stock `emacs` (the NS/Cocoa build) wrapped with Doom by
   [nix-doom-emacs-unstraightened](https://github.com/marienz/nix-doom-emacs-unstraightened),
   reached through the omniflake index; its `homeModule` is added to the module
