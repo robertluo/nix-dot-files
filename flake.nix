@@ -36,28 +36,49 @@
 
   outputs = {nixpkgs, nixpkgs-neovim, nixpkgs-devenv, omniflake, jolt, ...} :
     let
-      system = "aarch64-darwin";
+      inherit (nixpkgs) lib;
       username = "tianluo";
-      pkgs = import nixpkgs {
+
+      mkPkgs = system: import nixpkgs {
         inherit system;
         overlays = [
           # hold neovim on 0.11; everything else rides unstable
           (_: _: { inherit (nixpkgs-neovim.legacyPackages.${system}) neovim-unwrapped; })
           # hold devenv on 2.2.2
           (_: _: { inherit (nixpkgs-devenv.legacyPackages.${system}) devenv; })
-          # nixpkgs has no jolt; surface the flake's package so home.nix can
-          # list a plain pkgs.jolt, like the pinned packages above
-          (_: _: { jolt = jolt.packages.${system}.default; })
-        ];
+        ]
+        # nixpkgs has no jolt; surface the flake's package so home.nix can list
+        # a plain pkgs.jolt, like the pinned packages above. Jolt only builds
+        # for aarch64-darwin and x86_64-linux, so on any other system the
+        # overlay is skipped and home.nix drops the package along with it.
+        ++ lib.optional (jolt.packages ? ${system})
+          (_: _: { jolt = jolt.packages.${system}.default; });
       };
+
       # nixpkgs follows above, so these evaluate against our package set
       home-manager = omniflake.flakes.home-manager;
       doom-emacs = omniflake.flakes.nix-doom-emacs-unstraightened;
-    in {
-      homeConfigurations."${username}" = 
+
+      # gui = false is the headless profile: no terminal emulator, no neovide,
+      # and Emacs built without the GTK/X closure.
+      mkHome = { system, gui }:
         home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
+          pkgs = mkPkgs system;
+          extraSpecialArgs = { inherit gui username; };
           modules = [ ./home.nix doom-emacs.homeModule ];
         };
+
+      darwin = mkHome { system = "aarch64-darwin"; gui = true; };
+    in {
+      # Every machine answers to "<user>@<system>", which is what the devenv
+      # `apply` script uses. The Mac additionally keeps the bare "<user>" name,
+      # since that is where `home-manager switch --flake .` lands when no
+      # <user>@<hostname> attribute matches.
+      homeConfigurations = {
+        "${username}" = darwin;
+        "${username}@aarch64-darwin" = darwin;
+        "${username}@x86_64-linux" = mkHome { system = "x86_64-linux"; gui = false; };
+        "${username}@aarch64-linux" = mkHome { system = "aarch64-linux"; gui = false; };
+      };
     };
 }

@@ -14,7 +14,7 @@
 
   # https://devenv.sh/scripts/
   scripts.apply.exec = ''
-    home-manager switch --flake .#tianluo
+    home-manager switch --flake ".#$(whoami)@$(nix eval --impure --raw --expr builtins.currentSystem)"
   '';
 
   scripts.update.exec = ''
@@ -22,7 +22,7 @@
   '';
 
   scripts.check.exec = ''
-    home-manager build --flake .#tianluo
+    home-manager build --flake ".#$(whoami)@$(nix eval --impure --raw --expr builtins.currentSystem)"
   '';
 
   scripts.update-readme.exec = ''

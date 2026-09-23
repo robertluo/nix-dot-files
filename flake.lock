@@ -59,11 +59,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789973080,
-        "narHash": "sha256-6thORndH4U/dFJT2QSCIsdzxpTT6PvJK+cNeAZ8J9Zw=",
+        "lastModified": 1790130986,
+        "narHash": "sha256-5euoczXkAf+Hg6qprbqnm1WSIGIgpFzUdzzY9IVH44k=",
         "ref": "refs/heads/main",
-        "rev": "9786b7faf65fac5871f62081380b7038d6a83cc0",
-        "revCount": 3551,
+        "rev": "23a1ff4d37d1cb0c765a37a41f23269aa53b1c1a",
+        "revCount": 3644,
         "submodules": true,
         "type": "git",
         "url": "https://github.com/jolt-lang/jolt"
@@ -93,11 +93,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1789286504,
-        "narHash": "sha256-eiEK7cKZORNEvX0GeF3RtNEF/JXhgf2RqSp3230q13E=",
+        "lastModified": 1790046670,
+        "narHash": "sha256-MYiI+CzL0tuWgRPjGsKCDHqYs2T3OzMlMQWOYWG0qso=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "ef34387ddd751e1ab8857adf4676492d32eb24ec",
+        "rev": "6774f7bc253789b113a4f39285dc0fa100abeacc",
         "type": "github"
       },
       "original": {
@@ -165,11 +165,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1789309292,
-        "narHash": "sha256-D1hsjxGSXG/RAAZhdJFcfxYdi1B51hCgb7M+j4Lgumk=",
+        "lastModified": 1790080550,
+        "narHash": "sha256-ZZt8ZfbM3RtFUmc7wA2vRogHj2cEFTKZOQ3LLOLd2dM=",
         "owner": "fzakaria",
         "repo": "omniflake",
-        "rev": "701ea1ffbbdcc038b8049c398be6784369bb8c57",
+        "rev": "1dc981b21a031265e19d5c66266bd6446ec60644",
         "type": "github"
       },
       "original": {
