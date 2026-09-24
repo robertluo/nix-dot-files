@@ -37,7 +37,12 @@
   outputs = {nixpkgs, nixpkgs-neovim, nixpkgs-devenv, omniflake, jolt, ...} :
     let
       inherit (nixpkgs) lib;
-      username = "tianluo";
+
+      # Machines differ by user and by system. `apply` resolves
+      # <whoami>@<currentSystem>, so a new box needs no change here as long as
+      # its pair is covered by these two lists.
+      usernames = [ "tianluo" "admin" ];
+      systems = [ "aarch64-darwin" "x86_64-linux" "aarch64-linux" ];
 
       mkPkgs = system: import nixpkgs {
         inherit system;
@@ -55,30 +60,43 @@
           (_: _: { jolt = jolt.packages.${system}.default; });
       };
 
+      # one package set per system, imported at most once each however many
+      # users share it
+      pkgsBySystem = lib.genAttrs systems mkPkgs;
+
       # nixpkgs follows above, so these evaluate against our package set
       home-manager = omniflake.flakes.home-manager;
       doom-emacs = omniflake.flakes.nix-doom-emacs-unstraightened;
 
-      # gui = false is the headless profile: no terminal emulator, no neovide,
-      # and Emacs built without the GTK/X closure.
-      mkHome = { system, gui }:
+      # gui is a property of the machine, not of the user. Only the Mac has a
+      # screen today, so it tracks the system; a Linux desktop would override
+      # this one line. home.nix still treats gui and isDarwin as separate axes.
+      guiFor = system: system == "aarch64-darwin";
+
+      mkHome = { system, username }:
         home-manager.lib.homeManagerConfiguration {
-          pkgs = mkPkgs system;
-          extraSpecialArgs = { inherit gui username; };
+          pkgs = pkgsBySystem.${system};
+          extraSpecialArgs = { inherit username; gui = guiFor system; };
           modules = [ ./home.nix doom-emacs.homeModule ];
         };
-
-      darwin = mkHome { system = "aarch64-darwin"; gui = true; };
     in {
-      # Every machine answers to "<user>@<system>", which is what the devenv
-      # `apply` script uses. The Mac additionally keeps the bare "<user>" name,
-      # since that is where `home-manager switch --flake .` lands when no
-      # <user>@<hostname> attribute matches.
-      homeConfigurations = {
-        "${username}" = darwin;
-        "${username}@aarch64-darwin" = darwin;
-        "${username}@x86_64-linux" = mkHome { system = "x86_64-linux"; gui = false; };
-        "${username}@aarch64-linux" = mkHome { system = "aarch64-linux"; gui = false; };
-      };
+      # "<user>@<system>" for every pair, which is what `apply` builds. The bare
+      # "tianluo" stays as the Mac's fallback, since that is where
+      # `home-manager switch --flake .` lands when no <user>@<hostname> matches.
+      homeConfigurations =
+        lib.listToAttrs (
+          map (c: lib.nameValuePair "${c.username}@${c.system}" (mkHome c)) (
+            lib.cartesianProduct {
+              username = usernames;
+              system = systems;
+            }
+          )
+        )
+        // {
+          "tianluo" = mkHome {
+            username = "tianluo";
+            system = "aarch64-darwin";
+          };
+        };
     };
 }

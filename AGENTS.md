@@ -23,28 +23,35 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
 `.#tianluo` would silently build the *Darwin* configuration on a Linux box.
 
 ## Conventions
-- Four `homeConfigurations` attributes: `tianluo` and `tianluo@aarch64-darwin`
-  (the same GUI config under both names), `tianluo@x86_64-linux` and
-  `tianluo@aarch64-linux` (headless). Every machine answers to `<user>@<system>`;
-  the Mac keeps the bare name too, because that is what
-  `home-manager switch --flake .` falls back to when no `<user>@<hostname>`
-  attribute matches
+- Configurations are the cross product of two lists in `flake.nix`:
+  `usernames = [ "tianluo" "admin" ]` and
+  `systems = [ "aarch64-darwin" "x86_64-linux" "aarch64-linux" ]`, built with
+  `lib.cartesianProduct` into `"<user>@<system>"` attributes, plus a bare
+  `tianluo` for the Mac (that is what `home-manager switch --flake .` falls back
+  to when no `<user>@<hostname>` attribute matches). `apply` resolves
+  `<whoami>@<currentSystem>`, so a new machine needs no flake change as long as
+  its pair is already listed. Adding a user is one word in `usernames`
+- `pkgsBySystem = lib.genAttrs systems mkPkgs` gives one package set per system,
+  imported at most once however many users share it. `genAttrs` is lazy, so
+  systems nobody evaluates cost nothing
 - Two independent axes, deliberately not conflated:
   - `gui`, passed through `extraSpecialArgs` — desktop vs headless. `gui = false`
     drops Ghostty and neovide and swaps Doom's Emacs for `emacs-nox`
   - `pkgs.stdenv.hostPlatform.isDarwin`, read inside `home.nix` — macOS vs Linux.
     It picks the home directory, chooses `ghostty-bin` over the source build, and
     gates the launchd block
-  A Linux desktop would therefore be `gui = true` and nothing else. Keep new
+  Which machines get a GUI is selected centrally by `guiFor` in `flake.nix`
+  (today: `system == "aarch64-darwin"`), but `home.nix` still reads the two as
+  separate axes, so a Linux desktop is a change to `guiFor` alone. Keep new
   conditionals on whichever axis actually applies
-- `username` is defined once, in `flake.nix`, and reaches `home.nix` through
-  `extraSpecialArgs` alongside `gui`. `home.username` and `home.homeDirectory`
-  are both derived from it — the latter by prefixing `/Users/` or `/home/`,
-  since standalone Home Manager gives `homeDirectory` no platform-derived
-  default (it is undefined for `stateVersion >= 20.09`). Before this the flake's
-  `username` only named the attributes while `home.nix` carried its own literal,
-  so changing one moved the attribute name and left the config building for the
-  old user
+- `username` reaches `home.nix` through `extraSpecialArgs` alongside `gui`, and
+  `home.username` and `home.homeDirectory` are both derived from it — the latter
+  by prefixing `/Users/` or `/home/`, since standalone Home Manager gives
+  `homeDirectory` no platform-derived default (it is undefined for
+  `stateVersion >= 20.09`). Home Manager's activation script hard-fails on a
+  mismatch (`checkStringEq USER "$USER" <home.username>` in
+  `modules/home-environment.nix`), so an attribute built for the wrong user
+  aborts rather than writing to someone else's home
 - Platform differences live in `home.nix` behind those two guards, not in
   per-machine modules. The file is small enough that one copy with guards beats
   three files to keep in sync

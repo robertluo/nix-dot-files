@@ -20,8 +20,8 @@ NixOS machines.
 
 ## Systems and profiles
 
-`flake.nix` builds every configuration through one `mkHome { system, gui }`, so
-`home.nix` is shared verbatim and varies along two independent axes:
+`flake.nix` builds every configuration through one `mkHome { system, username }`,
+so `home.nix` is shared verbatim and varies along two independent axes:
 
 - **`gui`**, passed in via `extraSpecialArgs` — the desktop/headless split.
   `gui = false` drops Ghostty and neovide and swaps Doom's Emacs for `emacs-nox`
@@ -30,24 +30,27 @@ NixOS machines.
   source build, and gates the launchd block
 
 Keeping the two apart means a Linux desktop would only need `gui = true`; nothing
-in `home.nix` conflates "has a screen" with "is a Mac".
+in `home.nix` conflates "has a screen" with "is a Mac". Which machines get a GUI
+is decided in one place, `guiFor` in `flake.nix`, currently "the Mac and nothing
+else".
 
-| Attribute                 | System           | `gui` |
-|---------------------------|------------------|-------|
-| `tianluo`                 | `aarch64-darwin` | true  |
-| `tianluo@aarch64-darwin`  | `aarch64-darwin` | true  |
-| `tianluo@x86_64-linux`    | `x86_64-linux`   | false |
-| `tianluo@aarch64-linux`   | `aarch64-linux`  | false |
+Neither the user nor the system is baked into `home.nix`. Both are lists in
+`flake.nix`, and the configurations are their cross product:
 
-Every machine answers to `<user>@<system>`, which is what `apply` builds. The Mac
-keeps the bare `tianluo` name as well, since that is where
-`home-manager switch --flake .` lands when no `<user>@<hostname>` attribute
-matches.
+```nix
+usernames = [ "tianluo" "admin" ];
+systems = [ "aarch64-darwin" "x86_64-linux" "aarch64-linux" ];
+```
 
-The user name is defined once, as `username` in `flake.nix`, and reaches
-`home.nix` through `extraSpecialArgs` next to `gui`; `home.username` and
-`home.homeDirectory` are both derived from it. `apply` likewise resolves
-`whoami`, so nothing outside `flake.nix` spells the name out.
+which yields `tianluo@aarch64-darwin`, `admin@x86_64-linux`, and so on — plus a
+bare `tianluo` for the Mac, since that is where `home-manager switch --flake .`
+lands when no `<user>@<hostname>` attribute matches. `home.username` and
+`home.homeDirectory` are derived from whichever name the attribute carries, so
+`admin` gets `/home/admin` without a second copy of anything.
+
+`apply` resolves `<whoami>@<currentSystem>`, so **a new machine needs no change
+here at all** as long as its user and system already appear in those two lists.
+Adding a user is one word.
 
 Jolt publishes only `aarch64-darwin` and `x86_64-linux`, so on `aarch64-linux`
 the overlay is skipped and `home.nix` drops `pkgs.jolt` with it — see
