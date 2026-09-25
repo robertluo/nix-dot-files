@@ -9,7 +9,6 @@ It declaratively manages the shell environment, editor tooling, CLI packages, an
 - `home.nix` — The actual Home Manager module (programs, packages, dotfile symlinks); takes `gui` as a module argument
 - `devenv.nix` / `devenv.yaml` — devenv dev environment (git, jq, pi-coding-agent)
 - `dotfiles/nvim/` — Neovim config, symlinked into `~/.config/nvim`
-- `dotfiles/doom/` — Doom Emacs config (DOOMDIR), baked into the store by the build
 
 ## Commands
 
@@ -96,55 +95,7 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   its input. The bump lands whenever the release automation next runs, not with
   the tag — for 2.2.2 that was 39 commits later, so the module set carries a few
   post-release fixes the 2.2.2 CLI never shipped with. Repin both halves together
-- [Jolt](https://jolt-lang.net) (Clojure on Chez Scheme) is a direct input because
-  the omniflake index does not carry it, and an overlay in `flake.nix` exposes its
-  flake package so `home.nix` lists a plain `pkgs.jolt`. Three details are
-  load-bearing, and the first two fail confusingly when missed:
-  - the URL is `git+https://github.com/jolt-lang/jolt?submodules=1`, never
-    `github:jolt-lang/jolt`. Jolt vendors its Scheme dependencies (irregex, sci,
-    fs, process, grenadine) as git submodules, and the `github:` fetcher reads
-    GitHub's tarball API, which omits them — the `vendor/` directories arrive
-    empty and the build dies on a missing `vendor/irregex/irregex.scm`
-  - the `flake-self-attrs` experimental feature must be enabled —
-    `~/.config/nix/nix.conf` on macOS, `nix.settings.experimental-features` on
-    NixOS — because Jolt's own flake sets `inputs.self.submodules`. Lix gates
-    that attribute, and merely *locking* this input evaluates it, so the feature
-    is a prerequisite for `apply` and `check` at all, not just for building Jolt
-    directly. It is the one requirement here that lives outside the repo, so a
-    fresh machine needs it set before the first `apply`. Stock Nix treats an
-    unknown feature name as a warning, not an error, so setting it is safe there
-  - Jolt publishes only `aarch64-darwin` and `x86_64-linux`. The overlay is
-    therefore wrapped in `lib.optional (jolt.packages ? ${system})`, and on
-    `aarch64-linux` it is skipped entirely — `pkgs.jolt` does not exist there, and
-    `(pkgs.jolt or null)` in `home.nix` filters itself out instead of failing to
-    evaluate. Adding a system to Jolt upstream needs no change here
-- Emacs is wrapped with Doom by
-  [nix-doom-emacs-unstraightened](https://github.com/marienz/nix-doom-emacs-unstraightened),
-  reached through the omniflake index; its `homeModule` is added to the module
-  list in `flake.nix`. On the GUI profile `programs.doom-emacs.emacs` is nixpkgs'
-  stock `emacs` (the NS/Cocoa build), which is also the module's own default.
-  Unstraightened's Cachix only holds the Doom package set built against stock
-  emacs, so staying on stock keeps that configuration eligible for it — but that
-  cache is not a substituter here, so `apply` still builds the package set
-  locally. Headless machines pass `emacs-nox`, dropping the GTK/X closure for a
-  daemon nothing can open a graphical frame against; the same reasoning says the
-  forfeited Cachix eligibility costs nothing in practice
-- `nix-doom-emacs-unstraightened` uses IFD — it builds a `doom-intermediates`
-  derivation during evaluation — so the Linux configurations cannot be fully
-  evaluated from the Mac without a Linux builder. `nix eval` there fails with
-  "a 'x86_64-linux' ... is required to build". To check the rest of a Linux
-  config from macOS, stub the module out:
-  `hc.extendModules { modules = [ { programs.doom-emacs.enable = lib.mkForce false; } ]; }`
-- The Emacs daemon is a service (`services.emacs`), never started from a shell.
-  Emacs derives its socket dir as `${TMPDIR:-/tmp}/emacs$UID`, and client
-  and server each compute it from their own environment: started from the
-  devShell, which carries no `TMPDIR`, the daemon listened on `/tmp/emacs502`
-  while `emacsclient` — seeing macOS's per-user `/var/folders/…/T` — looked
-  elsewhere and reported "can't find socket". launchd agents run in the per-user
-  domain and get that same `TMPDIR`, so bare `emacsclient -t` finds them.
-  `programs.doom-emacs` wires `services.emacs.package` to the Doom-wrapped Emacs
-  on its own, given `provideEmacs` (default true)
-- Launchd agents do not source `hm-session-vars.sh`, so
+ Launchd agents do not source `hm-session-vars.sh`, so
   `launchd.agents.emacs.config.EnvironmentVariables` hands the daemon
   `home.sessionVariables` plus `TERMINFO_DIRS`. Without the latter a tty frame
   in Ghostty dies on "Terminal type xterm-ghostty is not defined" — the entry
@@ -160,9 +111,6 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   standalone Home Manager cannot register a login shell in `/etc/shells`.
   Headless boxes also need `loginctl enable-linger tianluo`, or the Emacs daemon
   exits with the SSH session that started it
-- Doom's package set is resolved by Nix, never by `doom sync`. `dotfiles/doom/init.el`
-  and `packages.el` are read at *build* time — changing them means `apply`.
-  `config.el` is read at startup, so it only needs an Emacs restart
 - Fish is the primary shell; bash is available as a fallback
 - Ghostty is the default terminal emulator on the GUI profile; `ghostty-bin` is
   the prebuilt macOS app and is `aarch64-darwin` only, so `home.nix` selects the

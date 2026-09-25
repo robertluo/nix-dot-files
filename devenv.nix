@@ -25,10 +25,6 @@
     home-manager build --flake ".#$(whoami)@$(nix eval --impure --raw --expr builtins.currentSystem)"
   '';
 
-  scripts.update-readme.exec = ''
-    pi -p "Update README.md to reflect the current state of this repository. Read flake.nix, home.nix, devenv.nix, devenv.yaml, and the dotfiles/ directory structure. Do not enumerate the packages from home.nix — the Programs & Tools section stays a pointer to home.nix as the source of truth, since a hand-kept copy only drifts. Write the updated content to README.md." --no-session
-  '';
-
   # https://devenv.sh/basics/
   enterShell = ''
     echo "Available scripts: apply, update, check, update-readme"

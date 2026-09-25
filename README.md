@@ -12,8 +12,6 @@ NixOS machines.
 | home-manager    | via [omniflake](https://omniflake.com/docs/using) index                 |
 | Neovim          | held on the 0.11 series by an overlay from `nixpkgs-neovim` (`832efc09`) |
 | devenv          | held on 2.2.2 by an overlay from `nixpkgs-devenv` (`aa88e342`)           |
-| Emacs           | stock `emacs` (NS/Cocoa) on macOS, `emacs-nox` headless + Doom via `nix-doom-emacs-unstraightened` |
-| Jolt            | direct input `git+https://github.com/jolt-lang/jolt?submodules=1`       |
 | Target systems  | `aarch64-darwin` (GUI), `x86_64-linux` / `aarch64-linux` (headless)     |
 | Shell           | Fish (bash available as a fallback)                                     |
 | Terminal        | Ghostty (GUI profile only)                                              |
@@ -51,10 +49,6 @@ lands when no `<user>@<hostname>` attribute matches. `home.username` and
 `apply` resolves `<whoami>@<currentSystem>`, so **a new machine needs no change
 here at all** as long as its user and system already appear in those two lists.
 Adding a user is one word.
-
-Jolt publishes only `aarch64-darwin` and `x86_64-linux`, so on `aarch64-linux`
-the overlay is skipped and `home.nix` drops `pkgs.jolt` with it — see
-[Flake inputs](#flake-inputs).
 
 ### NixOS prerequisites
 
@@ -97,7 +91,6 @@ devenv shell
 apply            # Apply home config (home-manager switch)
 update           # Refresh pinned flake inputs (nix flake update)
 check            # Validate config without applying (home-manager build)
-update-readme    # Regenerate this README via pi-coding-agent
 ```
 
 `apply` and `check` resolve the attribute from `whoami` and `builtins.currentSystem`, so the
@@ -111,37 +104,6 @@ restate the package list; a hand-kept copy only drifts.
 ## Dotfiles
 
 The Neovim configuration under `dotfiles/nvim/` is symlinked into `~/.config/nvim` via `xdg.configFile`. It uses the [LazyVim](https://www.lazyvim.org/) distribution with custom plugins (`relevo`, `termux`) and language snippets.
-
-## Emacs
-
-Doom Emacs, built by
-[nix-doom-emacs-unstraightened](https://github.com/marienz/nix-doom-emacs-unstraightened).
-On macOS it wraps nixpkgs' stock `emacs` (the NS/Cocoa build, so `Emacs.app`
-lands in `~/Applications/Home Manager Apps`); staying on stock is what keeps
-that configuration eligible for unstraightened's Cachix, which only holds the
-Doom package set built against stock emacs. Headless machines pass `emacs-nox`
-instead — no GTK, no X, and nothing on those boxes can open a graphical frame
-anyway. That forfeits the Cachix eligibility, which costs nothing today because
-the cache is not wired up as a substituter here: `apply` builds the Doom package
-set locally either way. Nix resolves the whole set — there is no `doom sync`
-step and no `~/.emacs.d` checkout.
-
-The daemon runs as a service (`services.emacs`), never from a shell — a launchd
-agent on macOS, a systemd user service on Linux. See AGENTS.md for why that
-distinction matters, and why only the launchd side needs its environment spelled
-out.
-
-The config lives in `dotfiles/doom/`, and *when* a change takes effect depends
-on which file you edit:
-
-| File          | Read at | To apply     |
-|---------------|---------|--------------|
-| `init.el`     | build   | `apply`      |
-| `packages.el` | build   | `apply`      |
-| `config.el`   | startup | restart Emacs |
-
-Because `doomDir` is a store path, new files must be `git add`ed before the
-flake can see them.
 
 ## Conventions
 
@@ -194,34 +156,3 @@ Four inputs stay direct:
 index carries the pin. The revision tracks omniflake's pinning cadence rather
 than the tip of `master`.
 
-### Jolt, submodules, and `flake-self-attrs`
-
-[Jolt](https://jolt-lang.net) is a Clojure implementation on Chez Scheme. Two
-details of its input are load-bearing, and both fail confusingly when missed.
-
-The URL must be the `git+https` form with `?submodules=1`:
-
-```nix
-inputs.jolt.url = "git+https://github.com/jolt-lang/jolt?submodules=1";
-```
-
-`github:jolt-lang/jolt` does *not* work. Jolt vendors its Scheme dependencies
-(irregex, sci, fs, process, grenadine) as git submodules, and the `github:`
-fetcher reads GitHub's tarball API, which omits submodules — the `vendor/`
-directories arrive empty and the build fails on a missing
-`vendor/irregex/irregex.scm`.
-
-Separately, the `flake-self-attrs` experimental feature must be enabled — in
-`~/.config/nix/nix.conf` on macOS, or via `nix.settings.experimental-features`
-on NixOS:
-
-```
-experimental-features = nix-command flakes flake-self-attrs
-```
-
-Jolt's own flake sets `inputs.self.submodules`, an attribute Lix gates behind
-that feature. Merely *locking* the input evaluates it, so without the feature
-`apply` and `check` fail outright — not just builds of Jolt. Stock Nix treats an
-unrecognized feature name as a warning rather than an error, so the line is safe
-to set either way. This is the only requirement in this repo that lives outside
-it, so a fresh machine needs it before its first `apply`.

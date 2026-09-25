@@ -23,26 +23,6 @@ in {
     vimdiffAlias = true;
   };
 
-  programs.doom-emacs = {
-    enable = true;
-    doomDir = ./dotfiles/doom;
-    # the module defaults to pkgs.emacs, which drags in GTK and X. Headless
-    # machines only ever reach the daemon over a terminal or emacsclient.
-    emacs = if gui then pkgs.emacs else pkgs.emacs-nox;
-  };
-
-  services.emacs.enable = true;
-
-  # launchd starts agents with a bare environment, so the daemon needs the
-  # session variables spelled out. The systemd user service home-manager
-  # generates on Linux runs ExecStart through a login shell, which already
-  # picks them up.
-  launchd.agents.emacs.config.EnvironmentVariables = lib.mkIf isDarwin (
-    config.home.sessionVariables // {
-      TERMINFO_DIRS = "${config.home.profileDirectory}/share/terminfo:/usr/share/terminfo";
-    }
-  );
-
   programs.bash = {
     enable = true;
   };
@@ -74,15 +54,11 @@ in {
     pkgs.bashInteractive
     pkgs.ripgrep
     pkgs.babashka
-    # jolt builds only for aarch64-darwin and x86_64-linux; elsewhere the
-    # overlay in flake.nix is skipped and pkgs.jolt does not exist
-    (pkgs.jolt or null)
     pkgs.devenv
     pkgs.mosh
     pkgs.github-cli
     (if gui then pkgs.neovide else null)
     pkgs.curl
-    pkgs.doctl
     pkgs.tmux
   ];
 
