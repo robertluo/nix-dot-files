@@ -32,9 +32,20 @@ in {
     package = pkgs.man-db;
   };
 
-  programs.fish = {
+  programs.zsh = {
     enable = true;
-    interactiveShellInit = "devenv hook fish | source";
+    enableCompletion = true;
+    autosuggestion.enable = true;
+  };
+
+  programs.starship = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
+  programs.devenv = {
+    enable = true;
+    enableZshIntegration = true;
   };
 
   programs.ghostty = lib.mkIf gui {
@@ -54,7 +65,6 @@ in {
     pkgs.bashInteractive
     pkgs.ripgrep
     pkgs.babashka
-    pkgs.devenv
     pkgs.mosh
     pkgs.github-cli
     (if gui then pkgs.neovide else null)
