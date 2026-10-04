@@ -27,7 +27,7 @@
 
   # https://devenv.sh/basics/
   enterShell = ''
-    echo "Available scripts: apply, update, check, update-readme"
+    echo "Available scripts: apply, update, check"
   '';
 
   # See full reference at https://devenv.sh/reference/options/

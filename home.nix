@@ -36,17 +36,19 @@ in {
     enable = true;
     enableCompletion = true;
     autosuggestion.enable = true;
-  };
-
-  programs.starship = {
-    enable = true;
-    enableZshIntegration = true;
+    oh-my-zsh = {
+      enable = true;
+      theme = "agnoster";
+      plugins = [
+        "git"
+      ];
+    };
   };
 
   programs.devenv = {
     enable = true;
     enableZshIntegration = true;
-  };
+ };
 
   programs.ghostty = lib.mkIf gui {
     enable = true;
