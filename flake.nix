@@ -10,11 +10,6 @@
     omniflake.url = "github:fzakaria/omniflake";
     omniflake.inputs.nixpkgs.follows = "nixpkgs";
 
-    # nixpkgs ships exactly one neovim, and unstable is on the 0.12 series.
-    # This second nixpkgs exists only to supply neovim-unwrapped; the overlay
-    # below is the only place it is used.
-    nixpkgs-neovim.url = "github:NixOS/nixpkgs/832efc09b4caf6b4569fbf9dc01bec3082a00611";
-
     # Direct input: omniflake's "claude-code-nix" is a different (dead) fork,
     # and sadjow's is not in the index. Only its overlay is used, so the
     # package is built from our nixpkgs and the follows just avoids fetching
@@ -23,7 +18,7 @@
     claude-code.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = {nixpkgs, nixpkgs-neovim, omniflake, claude-code, ...} :
+  outputs = {nixpkgs, omniflake, claude-code, ...} :
     let
       inherit (nixpkgs) lib;
 
@@ -38,8 +33,6 @@
         # claude-code is unfree; allow it by name rather than everything
         config.allowUnfreePredicate = pkg: lib.getName pkg == "claude-code";
         overlays = [
-          # hold neovim on 0.11; everything else rides unstable
-          (_: _: { inherit (nixpkgs-neovim.legacyPackages.${system}) neovim-unwrapped; })
           # claude-code tracks sadjow/claude-code-nix rather than nixpkgs
           claude-code.overlays.default
         ];

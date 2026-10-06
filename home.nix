@@ -66,6 +66,7 @@ in {
     pkgs.jujutsu
     pkgs.bashInteractive
     pkgs.ripgrep
+    pkgs.tree-sitter
     pkgs.babashka
     pkgs.mosh
     pkgs.github-cli

@@ -5,7 +5,7 @@ This is a Home Manager flake for user "tianluo", shared by an Apple Silicon Mac
 It declaratively manages the shell environment, editor tooling, CLI packages, and dotfiles.
 
 ## Key files
-- `flake.nix` — Flake entry point; pins `nixpkgs` (nixos-unstable), `nixpkgs-neovim` (commit 832efc09 → Neovim 0.11.6), the latter applied as an overlay, reaches `home-manager` and `nix-doom-emacs-unstraightened` through the `omniflake` index, and takes `claude-code` (sadjow/claude-code-nix) as a direct input surfaced through a second overlay. `mkPkgs system` builds the package set and `mkHome { system, gui }` the configuration, so every machine shares one `home.nix`
+- `flake.nix` — Flake entry point; pins `nixpkgs` (nixos-unstable), reaches `home-manager` and `nix-doom-emacs-unstraightened` through the `omniflake` index, and takes `claude-code` (sadjow/claude-code-nix) as a direct input surfaced through an overlay. `mkPkgs system` builds the package set and `mkHome { system, gui }` the configuration, so every machine shares one `home.nix`
 - `home.nix` — The actual Home Manager module (programs, packages, dotfile symlinks); takes `gui` as a module argument
 - `devenv.nix` / `devenv.yaml` — devenv dev environment (git, jq, pi-coding-agent)
 - `dotfiles/nvim/` — Neovim config, symlinked into `~/.config/nvim`
@@ -63,23 +63,21 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
 - Third-party flakes come from [omniflake](https://omniflake.com/docs/using) as
   `omniflake.flakes.<name>`, not direct inputs. `omniflake.inputs.nixpkgs.follows = "nixpkgs"`
   makes every indexed flake evaluate against our `nixpkgs`
-- `nixpkgs`, `nixpkgs-neovim` and `claude-code` stay direct inputs: the first
-  is the one omniflake substitutes into indexed flakes, the second is an exact
-  revision the index cannot name, and the last is absent
+- `nixpkgs` and `claude-code` stay direct inputs: the first is the one
+  omniflake substitutes into indexed flakes, and the second is absent
   from the index — omniflake's `claude-code-nix` name belongs to an unrelated
   fork whose source 404s. Only its overlay is used, so `claude-code` builds
   against our `nixpkgs`, and `mkPkgs` admits it through an
   `allowUnfreePredicate` naming that one package rather than `allowUnfree`
 - `nix flake update` advances `home-manager` by advancing `omniflake`, whose index
   carries the pin — so the rev tracks omniflake's pinning cadence, not `master` tip
-- Neovim is held on the 0.11 series by an overlay in `flake.nix` that takes
-  `neovim-unwrapped` from `nixpkgs-neovim`; `home.nix` sets no `package` and takes
-  no extra argument, so the pin lives entirely in the flake. nixpkgs has no
-  versioned neovim attribute (no `neovim_0_11`), so a second nixpkgs is the only
-  way onto a different series, and `nixos-25.11` — the sole named branch still on
-  0.11 — stopped receiving commits 2026-06-30, hence the frozen revision. Its
-  closure is substitutable from cache.nixos.org on aarch64-darwin and
-  aarch64-linux (checked 2026-09-22), so the pin costs nothing on a Linux box
+- Neovim comes from `nixpkgs` unpinned (0.12 series). The config tracks
+  AstroNvim `^6` (`dotfiles/nvim/lua/lazy_setup.lua`), whose nvim-treesitter is
+  the `main` branch: it requires Neovim 0.12 and compiles parsers with the
+  `tree-sitter` CLI and a C compiler, hence `pkgs.tree-sitter` in
+  `home.packages`. AstroNvim v5's nvim-treesitter `master` branch breaks on 0.12
+  (render-markdown errors in `treesitter.lua` `get_range`), so the AstroNvim
+  major and the Neovim series move together — do not pin one without the other
 - Launchd agents do not source `hm-session-vars.sh`, so
   `launchd.agents.emacs.config.EnvironmentVariables` hands the daemon
   `home.sessionVariables` plus `TERMINFO_DIRS`. Without the latter a tty frame
