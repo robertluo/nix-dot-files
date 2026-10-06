@@ -69,6 +69,7 @@ in {
     pkgs.babashka
     pkgs.mosh
     pkgs.github-cli
+    pkgs.claude-code
     (if gui then pkgs.neovide else null)
     pkgs.curl
     pkgs.tmux

@@ -5,7 +5,7 @@ This is a Home Manager flake for user "tianluo", shared by an Apple Silicon Mac
 It declaratively manages the shell environment, editor tooling, CLI packages, and dotfiles.
 
 ## Key files
-- `flake.nix` — Flake entry point; pins `nixpkgs` (nixos-unstable), `nixpkgs-neovim` (commit 832efc09 → Neovim 0.11.6) and `nixpkgs-devenv` (commit aa88e342 → devenv 2.2.2), the latter two applied as overlays, reaches `home-manager` and `nix-doom-emacs-unstraightened` through the `omniflake` index, and takes `jolt` as a direct input surfaced through a third, conditionally applied overlay. `mkPkgs system` builds the package set and `mkHome { system, gui }` the configuration, so every machine shares one `home.nix`
+- `flake.nix` — Flake entry point; pins `nixpkgs` (nixos-unstable), `nixpkgs-neovim` (commit 832efc09 → Neovim 0.11.6), the latter applied as an overlay, reaches `home-manager` and `nix-doom-emacs-unstraightened` through the `omniflake` index, and takes `claude-code` (sadjow/claude-code-nix) as a direct input surfaced through a second overlay. `mkPkgs system` builds the package set and `mkHome { system, gui }` the configuration, so every machine shares one `home.nix`
 - `home.nix` — The actual Home Manager module (programs, packages, dotfile symlinks); takes `gui` as a module argument
 - `devenv.nix` / `devenv.yaml` — devenv dev environment (git, jq, pi-coding-agent)
 - `dotfiles/nvim/` — Neovim config, symlinked into `~/.config/nvim`
@@ -56,17 +56,20 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   three files to keep in sync
 - `home.packages` is one flat, order-preserving list filtered with
   `lib.filter (p: p != null)`, with conditional entries written inline as
-  `(pkgs.jolt or null)` and `(if gui then pkgs.neovide else null)`. Appending
+  `(if gui then pkgs.neovide else null)`. Appending
   conditionals with `++ lib.optional` instead would reorder the list and churn
   the profile hash on every machine for no behavioural change
 - Keep `home.stateVersion` in sync with the Home Manager release
 - Third-party flakes come from [omniflake](https://omniflake.com/docs/using) as
   `omniflake.flakes.<name>`, not direct inputs. `omniflake.inputs.nixpkgs.follows = "nixpkgs"`
   makes every indexed flake evaluate against our `nixpkgs`
-- `nixpkgs`, `nixpkgs-neovim`, `nixpkgs-devenv` and `jolt` stay direct inputs: the
-  first is the one omniflake substitutes into indexed flakes, the next two are
-  exact revisions the index cannot name, and the last is simply absent from the
-  index
+- `nixpkgs`, `nixpkgs-neovim` and `claude-code` stay direct inputs: the first
+  is the one omniflake substitutes into indexed flakes, the second is an exact
+  revision the index cannot name, and the last is absent
+  from the index — omniflake's `claude-code-nix` name belongs to an unrelated
+  fork whose source 404s. Only its overlay is used, so `claude-code` builds
+  against our `nixpkgs`, and `mkPkgs` admits it through an
+  `allowUnfreePredicate` naming that one package rather than `allowUnfree`
 - `nix flake update` advances `home-manager` by advancing `omniflake`, whose index
   carries the pin — so the rev tracks omniflake's pinning cadence, not `master` tip
 - Neovim is held on the 0.11 series by an overlay in `flake.nix` that takes
@@ -74,28 +77,10 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   no extra argument, so the pin lives entirely in the flake. nixpkgs has no
   versioned neovim attribute (no `neovim_0_11`), so a second nixpkgs is the only
   way onto a different series, and `nixos-25.11` — the sole named branch still on
-  0.11 — stopped receiving commits 2026-06-30, hence the frozen revision
-- devenv is held on 2.2.2 by the same mechanism — unstable's 2.3.1 carries a
-  regression — an overlay in `flake.nix` takes `devenv` from `nixpkgs-devenv`,
-  so `home.nix` keeps its plain `pkgs.devenv`. aa88e342 is the last master
-  commit before nixpkgs bumped 2.2.2 -> 2.3.0, and its `devenv` closure is fully
-  substitutable from cache.nixos.org on aarch64-darwin and aarch64-linux
-  (checked 2026-09-22 by querying the narinfo for the resolved output path;
-  the neovim pin, emacs-nox, jujutsu and babashka are cached there too), so
-  the pins cost nothing on a Linux box. To move the pin, find
-  the commit that bumped past the wanted version
-  (`gh api "repos/NixOS/nixpkgs/commits?path=pkgs/by-name/de/devenv/package.nix"`)
-  and take its parent
-- The CLI pin has a second half in `devenv.yaml`: the `devenv` input (the module
-  set in `src/modules`) is unpinned by default and tracks the repo's main
-  branch, so it drifts ahead of a held-back CLI. It is pinned to c972cb4, the
-  commit that bumps `src/modules/latest-version` to 2.2.2. The matching `v2.2.2`
-  tag is the wrong target: its `latest-version` still reads 2.2.1, and
-  `update-check.nix` then nags on every shell entry that the CLI is newer than
-  its input. The bump lands whenever the release automation next runs, not with
-  the tag — for 2.2.2 that was 39 commits later, so the module set carries a few
-  post-release fixes the 2.2.2 CLI never shipped with. Repin both halves together
- Launchd agents do not source `hm-session-vars.sh`, so
+  0.11 — stopped receiving commits 2026-06-30, hence the frozen revision. Its
+  closure is substitutable from cache.nixos.org on aarch64-darwin and
+  aarch64-linux (checked 2026-09-22), so the pin costs nothing on a Linux box
+- Launchd agents do not source `hm-session-vars.sh`, so
   `launchd.agents.emacs.config.EnvironmentVariables` hands the daemon
   `home.sessionVariables` plus `TERMINFO_DIRS`. Without the latter a tty frame
   in Ghostty dies on "Terminal type xterm-ghostty is not defined" — the entry

@@ -58,7 +58,7 @@ Home Manager is used standalone here, so a few settings stay in the machine's ow
 ```nix
 programs.fish.enable = true;          # registers fish in /etc/shells
 users.users.tianluo.shell = pkgs.fish;
-nix.settings.experimental-features = [ "nix-command" "flakes" "flake-self-attrs" ];
+nix.settings.experimental-features = [ "nix-command" "flakes" ];
 ```
 
 Home Manager cannot register a login shell itself. On a headless box also run

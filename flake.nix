@@ -15,12 +15,15 @@
     # below is the only place it is used.
     nixpkgs-neovim.url = "github:NixOS/nixpkgs/832efc09b4caf6b4569fbf9dc01bec3082a00611";
 
-    # Same trick for devenv, held on 2.2.2: unstable's 2.3.1 carries a
-    # regression. This is the last master commit before the 2.2.2 -> 2.3.0 bump.
-    nixpkgs-devenv.url = "github:NixOS/nixpkgs/aa88e342b757ea13a06cb6f7fc8c00a8e1d2bb64";
+    # Direct input: omniflake's "claude-code-nix" is a different (dead) fork,
+    # and sadjow's is not in the index. Only its overlay is used, so the
+    # package is built from our nixpkgs and the follows just avoids fetching
+    # a second one.
+    claude-code.url = "github:sadjow/claude-code-nix";
+    claude-code.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = {nixpkgs, nixpkgs-neovim, nixpkgs-devenv, omniflake, ...} :
+  outputs = {nixpkgs, nixpkgs-neovim, omniflake, claude-code, ...} :
     let
       inherit (nixpkgs) lib;
 
@@ -32,11 +35,13 @@
 
       mkPkgs = system: import nixpkgs {
         inherit system;
+        # claude-code is unfree; allow it by name rather than everything
+        config.allowUnfreePredicate = pkg: lib.getName pkg == "claude-code";
         overlays = [
           # hold neovim on 0.11; everything else rides unstable
           (_: _: { inherit (nixpkgs-neovim.legacyPackages.${system}) neovim-unwrapped; })
-          # hold devenv on 2.2.2
-          (_: _: { inherit (nixpkgs-devenv.legacyPackages.${system}) devenv; })
+          # claude-code tracks sadjow/claude-code-nix rather than nixpkgs
+          claude-code.overlays.default
         ];
       };
 
