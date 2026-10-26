@@ -50,6 +50,32 @@ in {
     enableZshIntegration = true;
  };
 
+  # devenv's hook spawns a nested `devenv shell`; cd-ing out makes that shell
+  # exit and the parent follow into the new directory, but the parent's precmd
+  # has already run, so a direct project->project cd is not activated until the
+  # next prompt (cachix/devenv#3129). Re-run the hook until PWD settles.
+  # mkAfter: must follow the integration's `eval "$(devenv hook zsh)"`.
+  programs.zsh.initContent = lib.mkAfter ''
+    if (( $+functions[_devenv_hook] )); then
+      functions[_devenv_hook_once]=$functions[_devenv_hook]
+      _devenv_hook_status() { return $1 }
+      _devenv_hook() {
+        local st=$? before
+        while :; do
+          before=$PWD
+          _devenv_hook_status $st
+          _devenv_hook_once
+          [[ $PWD == $before ]] && break
+        done
+        return $st
+      }
+    fi
+  '';
+
+  programs.zellij = {
+    enable = true;
+  };
+
   programs.ghostty = lib.mkIf gui {
     enable = true;
     # ghostty-bin is the prebuilt macOS app and is aarch64-darwin only;
@@ -73,7 +99,6 @@ in {
     pkgs.claude-code
     (if gui then pkgs.neovide else null)
     pkgs.curl
-    pkgs.tmux
   ];
 
   xdg.configFile."nvim" = {

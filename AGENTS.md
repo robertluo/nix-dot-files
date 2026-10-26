@@ -95,6 +95,12 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   Headless boxes also need `loginctl enable-linger tianluo`, or the Emacs daemon
   exits with the SSH session that started it
 - Fish is the primary shell; bash is available as a fallback
+- `home.nix` wraps devenv's zsh `_devenv_hook` (`lib.mkAfter`, so it follows
+  the integration's `eval`) to re-run it until `PWD` settles. Upstream, a direct
+  project→project `cd` makes the nested shell exit and the parent follow, but
+  the parent's precmd has already run, so the new project only activates on the
+  next prompt (cachix/devenv#3129, open as of 2.4.0). Drop the wrapper once
+  that is fixed
 - Ghostty is the default terminal emulator on the GUI profile; `ghostty-bin` is
   the prebuilt macOS app and is `aarch64-darwin` only, so `home.nix` selects the
   source build off Darwin
