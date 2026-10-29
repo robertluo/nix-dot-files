@@ -5,7 +5,7 @@ This is a Home Manager flake for user "tianluo", shared by an Apple Silicon Mac
 It declaratively manages the shell environment, editor tooling, CLI packages, and dotfiles.
 
 ## Key files
-- `flake.nix` — Flake entry point; pins `nixpkgs` (nixos-unstable), reaches `home-manager` and `nix-doom-emacs-unstraightened` through the `omniflake` index, and takes `claude-code` (sadjow/claude-code-nix) as a direct input surfaced through an overlay. `mkPkgs system` builds the package set and `mkHome { system, gui }` the configuration, so every machine shares one `home.nix`
+- `flake.nix` — Flake entry point; pins `nixpkgs` (nixos-unstable), reaches `home-manager` and `nix-doom-emacs-unstraightened` through the `omniflake` index, takes `claude-code` (sadjow/claude-code-nix) as a direct input surfaced through an overlay, and takes `jolt` (jolt-lang/jolt) as a non-flake source whose outputs an overlay calls. `mkPkgs system` builds the package set and `mkHome { system, gui }` the configuration, so every machine shares one `home.nix`
 - `home.nix` — The actual Home Manager module (programs, packages, dotfile symlinks); takes `gui` as a module argument
 - `devenv.nix` / `devenv.yaml` — devenv dev environment (git, jq, pi-coding-agent)
 - `dotfiles/nvim/` — Neovim config, symlinked into `~/.config/nvim`
@@ -69,6 +69,14 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   fork whose source 404s. Only its overlay is used, so `claude-code` builds
   against our `nixpkgs`, and `mkPkgs` admits it through an
   `allowUnfreePredicate` naming that one package rather than `allowUnfree`
+- `jolt` is not in the index either, and is a `flake = false` input
+  (`git+https://…?submodules=1`, since the build needs its `vendor/`
+  submodules). Its `flake.nix` declares `self.submodules = true`, which Lix
+  refuses without the experimental `flake-self-attrs` feature, so the overlay
+  imports that file and calls `outputs` itself, handing it our package set as
+  `nixpkgs.legacyPackages`. Upstream builds only `x86_64-linux` and
+  `aarch64-darwin`; the overlay adds `pkgs.jolt` only there, and `home.nix`
+  lists it as `(pkgs.jolt or null)`
 - `nix flake update` advances `home-manager` by advancing `omniflake`, whose index
   carries the pin — so the rev tracks omniflake's pinning cadence, not `master` tip
 - Neovim comes from `nixpkgs` unpinned (0.12 series). The config tracks

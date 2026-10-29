@@ -16,9 +16,16 @@
     # a second one.
     claude-code.url = "github:sadjow/claude-code-nix";
     claude-code.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Not a flake input: jolt's flake.nix sets `self.submodules = true`, which
+    # Lix rejects unless the experimental `flake-self-attrs` feature is on.
+    # Taking the source (with its vendor/ submodules) and calling its outputs
+    # below keeps every machine on stock settings.
+    jolt.url = "git+https://github.com/jolt-lang/jolt?submodules=1";
+    jolt.flake = false;
   };
 
-  outputs = {nixpkgs, omniflake, claude-code, ...} :
+  outputs = {nixpkgs, omniflake, claude-code, jolt, ...} :
     let
       inherit (nixpkgs) lib;
 
@@ -35,6 +42,21 @@
         overlays = [
           # claude-code tracks sadjow/claude-code-nix rather than nixpkgs
           claude-code.overlays.default
+          # jolt's own outputs, built from this package set. Upstream lists
+          # only x86_64-linux and aarch64-darwin, so elsewhere pkgs.jolt is
+          # absent and home.nix skips it.
+          (final: prev:
+            let
+              system = prev.stdenv.hostPlatform.system;
+              outputs = (import "${jolt}/flake.nix").outputs {
+                self = jolt;
+                nixpkgs = { inherit lib; legacyPackages.${system} = final; };
+                makes = null; # devShell only
+              };
+            in
+            lib.optionalAttrs (outputs.packages ? ${system}) {
+              jolt = outputs.packages.${system}.jolt;
+            })
         ];
       };
 

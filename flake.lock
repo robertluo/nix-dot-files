@@ -72,6 +72,24 @@
         "type": "github"
       }
     },
+    "jolt": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793254774,
+        "narHash": "sha256-iQcbtLcUOuYx1x18uLrX2HYQ/1hKo/bhpYbTFYoZOH8=",
+        "ref": "refs/heads/main",
+        "rev": "0ac561e18036ce39854f9f1081dca4dfc3aa9fd0",
+        "revCount": 4686,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/jolt-lang/jolt"
+      },
+      "original": {
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/jolt-lang/jolt"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1792773339,
@@ -130,6 +148,7 @@
     "root": {
       "inputs": {
         "claude-code": "claude-code",
+        "jolt": "jolt",
         "nixpkgs": "nixpkgs",
         "omniflake": "omniflake"
       }

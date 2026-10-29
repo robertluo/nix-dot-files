@@ -94,6 +94,7 @@ in {
     pkgs.ripgrep
     pkgs.tree-sitter
     pkgs.babashka
+    (pkgs.jolt or null)
     pkgs.mosh
     pkgs.github-cli
     pkgs.doctl
