@@ -35,9 +35,9 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   systems nobody evaluates cost nothing
 - Two independent axes, deliberately not conflated:
   - `gui`, passed through `extraSpecialArgs` — desktop vs headless. `gui = false`
-    drops Ghostty and neovide and swaps Doom's Emacs for `emacs-nox`
+    drops kitty and neovide and swaps Doom's Emacs for `emacs-nox`
   - `pkgs.stdenv.hostPlatform.isDarwin`, read inside `home.nix` — macOS vs Linux.
-    It picks the home directory, chooses `ghostty-bin` over the source build, and
+    It picks the home directory, chooses `kitty-bin` over the source build, and
     gates the launchd block
   Which machines get a GUI is selected centrally by `guiFor` in `flake.nix`
   (today: `system == "aarch64-darwin"`), but `home.nix` still reads the two as
@@ -109,6 +109,7 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   the parent's precmd has already run, so the new project only activates on the
   next prompt (cachix/devenv#3129, open as of 2.4.0). Drop the wrapper once
   that is fixed
-- Ghostty is the default terminal emulator on the GUI profile; `ghostty-bin` is
-  the prebuilt macOS app and is `aarch64-darwin` only, so `home.nix` selects the
+- kitty is the default terminal emulator on the GUI profile, configured through
+  `programs.kitty.settings` (written to `kitty.conf`); `kitty-bin` is the
+  prebuilt macOS app and is `aarch64-darwin` only, so `home.nix` selects the
   source build off Darwin
