@@ -97,6 +97,19 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   shell (`$SHELL -l -c`), which sources the session variables already. Setting
   `launchd.agents.*` on Linux would be inert rather than an error —
   `launchd.enable` defaults to `isDarwin` — but the guard says why
+- The tuios daemon is owned by the service manager — `launchd.agents.tuios`
+  (`KeepAlive`) on Darwin, `systemd.user.services.tuios` (`Restart=always`)
+  on Linux — so it never inherits a shell's environment. Panes inherit the
+  daemon's env; one auto-spawned from inside a devenv shell hands every pane
+  that `DEVENV_ROOT`, and devenv's hook then treats each pane as already
+  active and never switches projects. A second daemon exits 1 while the socket
+  is held, so the service retries every 10s until a stale daemon is killed.
+  Both run `${config.home.profileDirectory}/bin/tuios`, not a store path, and
+  the systemd unit sets `X-RestartIfChanged = false`: a switch must never
+  restart the daemon, since that closes every pane, including the one running
+  `apply`. After a tuios upgrade, `tuios kill-server` picks up the new binary.
+  Headless boxes also need `loginctl enable-linger`, or the daemon and every
+  pane go away with the last SSH session
 - On NixOS the machine's own `configuration.nix` must carry
   `programs.fish.enable = true` and `users.users.tianluo.shell = pkgs.fish`;
   standalone Home Manager cannot register a login shell in `/etc/shells`.

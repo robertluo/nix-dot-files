@@ -104,6 +104,46 @@ in {
     pkgs.curl
   ];
 
+  # Panes inherit the tuios daemon's environment, and the daemon is otherwise
+  # spawned by whichever shell first runs `tuios`. Started from inside a devenv
+  # shell, every pane carries that DEVENV_ROOT and devenv's hook, which treats
+  # it as "already active", never switches projects. launchd starts it clean.
+  # KeepAlive also restarts it after `tuios kill-server`, so a stray shell
+  # never gets the chance to spawn one; while another daemon holds the socket
+  # it exits 1 and the service manager retries every 10s.
+  #
+  # The binary is reached through the profile, not a store path: a store path
+  # would change the unit on every tuios bump, and the switch would restart
+  # the daemon, closing every pane, including the one running `apply`. After
+  # an upgrade, `tuios kill-server` to move the daemon onto the new binary.
+  launchd.agents.tuios = lib.mkIf isDarwin {
+    enable = true;
+    config = {
+      ProgramArguments = [ "${config.home.profileDirectory}/bin/tuios" "daemon" ];
+      WorkingDirectory = config.home.homeDirectory;
+      RunAtLoad = true;
+      KeepAlive = true;
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/tuios-daemon.log";
+    };
+  };
+
+  # Linux counterpart. Headless boxes need `loginctl enable-linger`, or the
+  # user manager, and every pane with it, goes away with the last SSH session.
+  systemd.user.services.tuios = lib.mkIf (!isDarwin) {
+    Unit = {
+      Description = "tuios daemon";
+      # Same reason as the profile path: never restart it from a switch.
+      X-RestartIfChanged = false;
+    };
+    Service = {
+      ExecStart = "${config.home.profileDirectory}/bin/tuios daemon";
+      WorkingDirectory = config.home.homeDirectory;
+      Restart = "always";
+      RestartSec = 10;
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
+
   xdg.configFile."nvim" = {
     source = ./dotfiles/nvim;
     recursive = true;
