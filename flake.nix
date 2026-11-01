@@ -57,6 +57,24 @@
             lib.optionalAttrs (outputs.packages ? ${system}) {
               jolt = outputs.packages.${system}.jolt;
             })
+          # tuios 0.12.0 is on nixpkgs master but not yet nixos-unstable; the
+          # hashes are master's. The guard retires this once nixpkgs catches up.
+          # The test sits inside the value, not around the attribute set:
+          # deciding which names an overlay returns from prev recurses.
+          (final: prev: {
+            tuios =
+              if lib.versionOlder prev.tuios.version "0.12.0" then
+                prev.tuios.overrideAttrs (finalAttrs: old: {
+                  version = "0.12.0";
+                  src = old.src.override {
+                    tag = "v${finalAttrs.version}";
+                    hash = "sha256-74V4F/xyDyWmJtmhIlpfSyAa0018SWw/dr2RsF4gGdM=";
+                  };
+                  vendorHash = "sha256-DtMxCwM/rv2JX72o7m5OEHVcvl+XZBgB9pvmRaPhUuU=";
+                })
+              else
+                prev.tuios;
+          })
         ];
       };
 

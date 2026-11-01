@@ -76,14 +76,14 @@ in {
     enable = true;
   };
 
-  programs.kitty = lib.mkIf gui {
+  programs.ghostty = lib.mkIf gui {
     enable = true;
-    # kitty-bin is the prebuilt macOS app and is aarch64-darwin only;
+    # ghostty-bin is the prebuilt macOS app and is aarch64-darwin only;
     # elsewhere the source build is the native one anyway.
-    package = if isDarwin then pkgs.kitty-bin else pkgs.kitty;
+    package = if isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
     settings = {
-      font_size = 14;
-      background_opacity = "0.95";
+      font-size = 14;
+      background-opacity = 0.95;
     };
   };
 

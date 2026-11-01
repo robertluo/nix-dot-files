@@ -35,9 +35,9 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   systems nobody evaluates cost nothing
 - Two independent axes, deliberately not conflated:
   - `gui`, passed through `extraSpecialArgs` — desktop vs headless. `gui = false`
-    drops kitty and neovide and swaps Doom's Emacs for `emacs-nox`
+    drops Ghostty and neovide and swaps Doom's Emacs for `emacs-nox`
   - `pkgs.stdenv.hostPlatform.isDarwin`, read inside `home.nix` — macOS vs Linux.
-    It picks the home directory, chooses `kitty-bin` over the source build, and
+    It picks the home directory, chooses `ghostty-bin` over the source build, and
     gates the launchd block
   Which machines get a GUI is selected centrally by `guiFor` in `flake.nix`
   (today: `system == "aarch64-darwin"`), but `home.nix` still reads the two as
@@ -77,6 +77,11 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   `nixpkgs.legacyPackages`. Upstream builds only `x86_64-linux` and
   `aarch64-darwin`; the overlay adds `pkgs.jolt` only there, and `home.nix`
   lists it as `(pkgs.jolt or null)`
+- tuios is pinned ahead of nixos-unstable by an overlay in `mkPkgs` (0.12.0,
+  with nixpkgs master's hashes). It applies only while `prev.tuios.version` is
+  older, so it goes inert once nixpkgs catches up; delete it then. The version
+  test sits inside the `tuios` value: an overlay whose attribute *names* depend
+  on `prev` recurses
 - `nix flake update` advances `home-manager` by advancing `omniflake`, whose index
   carries the pin — so the rev tracks omniflake's pinning cadence, not `master` tip
 - Neovim comes from `nixpkgs` unpinned (0.12 series). The config tracks
@@ -131,7 +136,6 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   the parent's precmd has already run, so the new project only activates on the
   next prompt (cachix/devenv#3129, open as of 2.4.0). Drop the wrapper once
   that is fixed
-- kitty is the default terminal emulator on the GUI profile, configured through
-  `programs.kitty.settings` (written to `kitty.conf`); `kitty-bin` is the
-  prebuilt macOS app and is `aarch64-darwin` only, so `home.nix` selects the
+- Ghostty is the default terminal emulator on the GUI profile; `ghostty-bin` is
+  the prebuilt macOS app and is `aarch64-darwin` only, so `home.nix` selects the
   source build off Darwin
