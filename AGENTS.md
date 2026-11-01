@@ -110,6 +110,15 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   `apply`. After a tuios upgrade, `tuios kill-server` picks up the new binary.
   Headless boxes also need `loginctl enable-linger`, or the daemon and every
   pane go away with the last SSH session
+- tuios settings that Nix owns go in a `config.d/nix.toml` drop-in
+  (`home.file`, under `~/Library/Application Support/tuios` on macOS and
+  `$XDG_CONFIG_HOME/tuios` elsewhere, which is adrg/xdg's config home), never
+  `config.toml`: that file stays writable for the settings page and
+  `tuios set-config`, and wins over every drop-in. The drop-in sets the rail's
+  agent row to show `$context`, `$cost` and `$model` on every row. Those values
+  come from the Claude Code status line feed
+  (`tuios integration install claude-code --statusline`), which lives in the
+  mutable `~/.claude/settings.json` and is not managed here
 - On NixOS the machine's own `configuration.nix` must carry
   `programs.fish.enable = true` and `users.users.tianluo.shell = pkgs.fish`;
   standalone Home Manager cannot register a login shell in `/etc/shells`.

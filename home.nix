@@ -144,6 +144,50 @@ in {
     Install.WantedBy = [ "default.target" ];
   };
 
+  # tuios merges every config.d/*.toml under config.toml, which wins over
+  # them. Nix owns this drop-in; config.toml stays writable, so the settings
+  # page and `tuios set-config` keep working (and override anything here).
+  # The directory is adrg/xdg's config home: ~/Library/Application Support
+  # on macOS, $XDG_CONFIG_HOME elsewhere.
+  #
+  # The Claude Code status line feed (`tuios integration install claude-code
+  # --statusline`, written into the mutable ~/.claude/settings.json) puts
+  # model, context and cost in each agent pane's metadata. The shipped rail
+  # row hides model and cost, and shows context only from 80% as "ctx 84%".
+  # $model, $context and $cost draw the raw values on every row instead,
+  # replacing the `context` token so a full window is not listed twice.
+  #
+  # $context arrives as a whole percent ("42%"), which the rules' gt/lt cannot
+  # read as a number, so the colouring is by text, first match wins: 8% and
+  # 9% are caught before the "8"/"9" prefixes that mark 80-99%.
+  home.file."${if isDarwin then "${config.home.homeDirectory}/Library/Application Support" else config.xdg.configHome}/tuios/config.d/nix.toml".source =
+    (pkgs.formats.toml { }).generate "tuios-nix.toml" {
+      appearance.sidebar = {
+        # The note line drops its last token first; at 24 columns the three
+        # values leave no room for `now`.
+        width = 32;
+        agent_row = {
+          tokens = [
+            "session" "need" "harness" "name" "progress" "elapsed"
+            "$context" "$cost" "$model"
+            "subagents" "pr" "meta" "now" "message"
+          ];
+          "$context" = {
+            fg = "muted";
+            rule = [
+              { equals = "8%"; fg = "muted"; }
+              { equals = "9%"; fg = "muted"; }
+              { equals = "100%"; fg = "error"; bold = true; }
+              { starts_with = "9"; fg = "error"; }
+              { starts_with = "8"; fg = "warning"; }
+            ];
+          };
+          "$cost".fg = "muted";
+          "$model".fg = "muted";
+        };
+      };
+    };
+
   xdg.configFile."nvim" = {
     source = ./dotfiles/nvim;
     recursive = true;
