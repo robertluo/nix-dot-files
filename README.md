@@ -22,7 +22,7 @@ NixOS machines.
 so `home.nix` is shared verbatim and varies along two independent axes:
 
 - **`gui`**, passed in via `extraSpecialArgs` — the desktop/headless split.
-  `gui = false` drops Ghostty and neovide and swaps Doom's Emacs for `emacs-nox`
+  `gui = false` drops Ghostty and swaps Doom's Emacs for `emacs-nox`
 - **`pkgs.stdenv.hostPlatform.isDarwin`**, read inside `home.nix` — the
   macOS/Linux split. It picks the home directory, chooses `ghostty-bin` over the
   source build, and gates the launchd block

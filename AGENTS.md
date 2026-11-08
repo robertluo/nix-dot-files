@@ -35,7 +35,7 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   systems nobody evaluates cost nothing
 - Two independent axes, deliberately not conflated:
   - `gui`, passed through `extraSpecialArgs` — desktop vs headless. `gui = false`
-    drops Ghostty and neovide and swaps Doom's Emacs for `emacs-nox`
+    drops Ghostty and swaps Doom's Emacs for `emacs-nox`
   - `pkgs.stdenv.hostPlatform.isDarwin`, read inside `home.nix` — macOS vs Linux.
     It picks the home directory, chooses `ghostty-bin` over the source build, and
     gates the launchd block
@@ -56,7 +56,7 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   three files to keep in sync
 - `home.packages` is one flat, order-preserving list filtered with
   `lib.filter (p: p != null)`, with conditional entries written inline as
-  `(if gui then pkgs.neovide else null)`. Appending
+  `(pkgs.jolt or null)` or `(if gui then pkgs.foo else null)`. Appending
   conditionals with `++ lib.optional` instead would reorder the list and churn
   the profile hash on every machine for no behavioural change
 - Keep `home.stateVersion` in sync with the Home Manager release
@@ -70,8 +70,10 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   against our `nixpkgs`, and `mkPkgs` admits it through an
   `allowUnfreePredicate` naming that one package rather than `allowUnfree`
 - `jolt` is not in the index either, and is a `flake = false` input
-  (`git+https://…?submodules=1`, since the build needs its `vendor/`
-  submodules). Its `flake.nix` declares `self.submodules = true`, which Lix
+  (`git+https://…?ref=refs/tags/<release>&submodules=1`, since the build needs
+  its `vendor/` submodules). It is pinned to a release tag rather than `main`,
+  so `nix flake update` leaves it alone; bumping it means editing the tag in
+  the URL, then `nix flake update jolt`. Its `flake.nix` declares `self.submodules = true`, which Lix
   refuses without the experimental `flake-self-attrs` feature, so the overlay
   imports that file and calls `outputs` itself, handing it our package set as
   `nixpkgs.legacyPackages`. Upstream builds only `x86_64-linux` and
