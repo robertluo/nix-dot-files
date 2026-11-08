@@ -130,6 +130,10 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   Headless boxes also need `loginctl enable-linger tianluo`, or the Emacs daemon
   exits with the SSH session that started it
 - Fish is the primary shell; bash is available as a fallback
+- `~/.omlx/bin` is on `home.sessionPath` (Darwin only) because oMLX's installer
+  otherwise appends a PATH block to `~/.zshrc`. That turns the managed symlink
+  into a regular file, and the next switch aborts with "would be clobbered".
+  If that happens again, move the file aside and switch
 - `home.nix` wraps devenv's zsh `_devenv_hook` (`lib.mkAfter`, so it follows
   the integration's `eval`) to re-run it until `PWD` settles. Upstream, a direct
   project→project `cd` makes the nested shell exit and the parent follow, but

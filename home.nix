@@ -13,6 +13,11 @@ in {
     LC_MESSAGES = "en_US.UTF-8";
   };
 
+  # oMLX (Apple Silicon only) installs its CLI shims here and, left to itself,
+  # appends a PATH block to ~/.zshrc, which replaces the managed symlink and
+  # blocks the next switch. Declaring the path covers every shell instead.
+  home.sessionPath = lib.mkIf isDarwin [ "$HOME/.omlx/bin" ];
+
   programs.home-manager.enable = true;
 
   programs.neovim = {
