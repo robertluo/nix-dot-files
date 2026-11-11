@@ -142,6 +142,15 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   the parent's precmd has already run, so the new project only activates on the
   next prompt (cachix/devenv#3129, open as of 2.4.0). Drop the wrapper once
   that is fixed
+- apple/container (`pkgs.container`, for running OCI images in lightweight
+  VMs) comes from nixpkgs, which marks it `aarch64-darwin` only; `home.nix`
+  lists it behind `lib.meta.availableOn`, so Linux profiles drop it. It was
+  not in the binary cache at the time it was added, so a switch can end up
+  compiling it with Swift.
+  `container system start` registers the API server with launchd itself,
+  using the store path it was started from (`CONTAINER_INSTALL_ROOT`), so
+  after an upgrade run `container system stop && container system start`.
+  Otherwise the service stays on the old path until GC deletes it
 - Ghostty is the default terminal emulator on the GUI profile; `ghostty-bin` is
   the prebuilt macOS app and is `aarch64-darwin` only, so `home.nix` selects the
   source build off Darwin

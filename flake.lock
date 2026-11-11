@@ -75,17 +75,17 @@
     "jolt": {
       "flake": false,
       "locked": {
-        "lastModified": 1793863208,
-        "narHash": "sha256-pwj9/sBnv3EySE9RZil6PTfIr+JQ9BUGGMaSzbARzr8=",
-        "ref": "refs/tags/v0.8.24",
-        "rev": "a9b24d4c9dd57e3615d68975eb457e7b16554da9",
-        "revCount": 4925,
+        "lastModified": 1794354560,
+        "narHash": "sha256-NT42ipahzqcnopz1Pd9WYRool9pypNRuK19HbE22AA4=",
+        "ref": "refs/tags/v0.8.26",
+        "rev": "84008f560276b9a417c9bab0f0421ae90bdcdf17",
+        "revCount": 5152,
         "submodules": true,
         "type": "git",
         "url": "https://github.com/jolt-lang/jolt"
       },
       "original": {
-        "ref": "refs/tags/v0.8.24",
+        "ref": "refs/tags/v0.8.26",
         "submodules": true,
         "type": "git",
         "url": "https://github.com/jolt-lang/jolt"

@@ -106,6 +106,8 @@ in {
     pkgs.tuios
     pkgs.claude-code
     pkgs.curl
+    # apple/container: OCI images in lightweight VMs. aarch64-darwin only.
+    (if lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.container then pkgs.container else null)
   ];
 
   # Panes inherit the tuios daemon's environment, and the daemon is otherwise

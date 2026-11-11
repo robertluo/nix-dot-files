@@ -21,7 +21,7 @@
     # Lix rejects unless the experimental `flake-self-attrs` feature is on.
     # Taking the source (with its vendor/ submodules) and calling its outputs
     # below keeps every machine on stock settings.
-    jolt.url = "git+https://github.com/jolt-lang/jolt?ref=refs/tags/v0.8.24&submodules=1";
+    jolt.url = "git+https://github.com/jolt-lang/jolt?ref=refs/tags/v0.8.26&submodules=1";
     jolt.flake = false;
   };
 
