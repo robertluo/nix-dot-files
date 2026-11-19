@@ -2,6 +2,35 @@
 
 let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
+
+  # Tailscale runs as an unprivileged user daemon in userspace-networking
+  # mode (no utun, no root, no system extension), with its state and socket
+  # under the XDG state dir. `tailscale serve` still works, since tailscaled
+  # terminates those connections itself; outbound access to other tailnet
+  # hosts from this machine would need its SOCKS5/HTTP proxy.
+  # The socket path must stay under ~104 bytes (macOS sun_path).
+  tailscaleDir = "${config.xdg.stateHome}/tailscale";
+  tailscaleSocket = "${tailscaleDir}/tailscaled.sock";
+  # The CLI has no env var for the socket, only the root `--socket` flag.
+  # tailscale and tailscaled are one binary that picks its role from argv[0],
+  # so wrap the original bin/tailscale path instead of using wrapProgram,
+  # which would rename it to .tailscale-wrapped and start the daemon.
+  tailscale = pkgs.symlinkJoin {
+    name = "tailscale-user-${pkgs.tailscale.version}";
+    paths = [ pkgs.tailscale ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      rm $out/bin/tailscale
+      makeWrapper ${pkgs.tailscale}/bin/tailscale $out/bin/tailscale \
+        --add-flags ${lib.escapeShellArg "--socket=${tailscaleSocket}"}
+    '';
+  };
+  tailscaledArgs = [
+    "${pkgs.tailscale}/bin/tailscaled"
+    "--tun=userspace-networking"
+    "--statedir=${tailscaleDir}"
+    "--socket=${tailscaleSocket}"
+  ];
 in {
   home.username = username;
   home.homeDirectory = (if isDarwin then "/Users/" else "/home/") + username;
@@ -106,6 +135,7 @@ in {
     pkgs.tuios
     pkgs.claude-code
     pkgs.curl
+    tailscale
     # apple/container: OCI images in lightweight VMs. aarch64-darwin only.
     (if lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.container then pkgs.container else null)
   ];
@@ -144,6 +174,29 @@ in {
     Service = {
       ExecStart = "${config.home.profileDirectory}/bin/tuios daemon";
       WorkingDirectory = config.home.homeDirectory;
+      Restart = "always";
+      RestartSec = 10;
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
+
+  # tailscaled, see `tailscale` in the let block. Unlike tuios, it runs from a
+  # store path on purpose: a switch that bumps tailscale should restart it
+  # onto the new binary, which only blips the tailnet for a second.
+  launchd.agents.tailscaled = lib.mkIf isDarwin {
+    enable = true;
+    config = {
+      ProgramArguments = tailscaledArgs;
+      RunAtLoad = true;
+      KeepAlive = true;
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/tailscaled.log";
+    };
+  };
+
+  systemd.user.services.tailscaled = lib.mkIf (!isDarwin) {
+    Unit.Description = "Tailscale daemon (userspace networking)";
+    Service = {
+      ExecStart = lib.escapeShellArgs tailscaledArgs;
       Restart = "always";
       RestartSec = 10;
     };
