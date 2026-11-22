@@ -151,22 +151,33 @@ hardcoding one, so the same command is correct on every machine. Hardcoding
   using the store path it was started from (`CONTAINER_INSTALL_ROOT`), so
   after an upgrade run `container system stop && container system start`.
   Otherwise the service stays on the old path until GC deletes it
-- Tailscale is `pkgs.tailscale` run as an unprivileged user daemon
-  (`launchd.agents.tailscaled` / `systemd.user.services.tailscaled`) with
-  `--tun=userspace-networking`, state and socket in
-  `$XDG_STATE_HOME/tailscale`. No root, no macOS system extension, and the
-  GUI apps are not used. Its purpose is `tailscale serve`, which publishes
-  localhost-only servers to the tailnet over HTTPS (e.g. for the iPad).
-  Userspace mode gives this machine no tun interface, so reaching *other*
-  tailnet hosts from here would need tailscaled's SOCKS5/HTTP proxy. The CLI
-  has no socket env var, so `home.packages` carries a `symlinkJoin` whose
-  `bin/tailscale` is a `makeWrapper` adding `--socket`. Do not use
-  `wrapProgram`: tailscale and tailscaled are one binary dispatching on
-  argv[0], and the renamed `.tailscale-wrapped` would start the daemon. The
-  socket path must stay under macOS's 104-byte `sun_path` limit. Log in with
-  `tailscale up --accept-dns=false`: an unprivileged daemon cannot write the
-  system resolver config (`scutil` is denied). HTTPS for `serve` needs
-  MagicDNS and HTTPS certificates enabled in the tailnet's admin console
+- Tailscale prefers a **system** tailscaled (root, real utun/tun device),
+  which Home Manager cannot install, so it belongs to the host: nix-darwin's
+  `services.tailscale.enable` on the Mac (`/etc/nix-darwin/flake.nix`, outside
+  this repo), NixOS's `services.tailscale.enable` in `configuration.nix`, or
+  a distro package. Only with one can every program reach *other* tailnet
+  hosts; `tailscale ping` working while ssh/VNC fail is the symptom of its
+  absence. Nothing here assumes which hosts have one: `home.nix` checks at
+  runtime for the unit file (`/Library/LaunchDaemons/com.tailscale.tailscaled.plist`,
+  shared by nix-darwin and `tailscaled install-system-daemon`; on Linux
+  `tailscaled.service` under `/etc/systemd/system` or `/usr/lib/systemd/system`)
+- Without one, the fallback is `pkgs.tailscale` run as an unprivileged user
+  daemon (`launchd.agents.tailscaled` / `systemd.user.services.tailscaled`)
+  with `--tun=userspace-networking`, state and socket in
+  `$XDG_STATE_HOME/tailscale`. It stands down when the unit file exists — the
+  launchd agent exits 0 (`KeepAlive.SuccessfulExit = false`), the systemd
+  unit has negated `ConditionPathExists` — since two daemons would be two
+  tailnet nodes. Userspace mode is enough for `tailscale serve` (publishing
+  localhost-only servers over HTTPS, e.g. for the iPad), not for outbound
+  connections. The CLI has no socket env var, so `home.packages` carries a
+  `symlinkJoin` whose `bin/tailscale` is a script that adds `--socket` unless
+  the system unit exists. Do not use `wrapProgram`: tailscale and tailscaled
+  are one binary dispatching on argv[0], and the renamed `.tailscale-wrapped`
+  would start the daemon. The socket path must stay under macOS's 104-byte
+  `sun_path` limit. Log a user daemon in with `tailscale up --accept-dns=false`:
+  it cannot write the system resolver config (`scutil` is denied). HTTPS for
+  `serve` needs MagicDNS and HTTPS certificates enabled in the tailnet's
+  admin console
 - Ghostty is the default terminal emulator on the GUI profile; `ghostty-bin` is
   the prebuilt macOS app and is `aarch64-darwin` only, so `home.nix` selects the
   source build off Darwin

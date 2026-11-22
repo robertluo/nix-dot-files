@@ -3,26 +3,53 @@
 let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
 
-  # Tailscale runs as an unprivileged user daemon in userspace-networking
-  # mode (no utun, no root, no system extension), with its state and socket
-  # under the XDG state dir. `tailscale serve` still works, since tailscaled
-  # terminates those connections itself; outbound access to other tailnet
-  # hosts from this machine would need its SOCKS5/HTTP proxy.
+  # Tailscale prefers a system tailscaled (root, real utun/tun device), which
+  # is the only way other tailnet hosts become reachable from this machine
+  # for every program. Home Manager cannot install one, so it is the host's
+  # business: nix-darwin's `services.tailscale` on a Mac, NixOS's on Linux,
+  # or a distro package. Whether one is installed is decided at runtime from
+  # its unit file, so nothing here assumes which hosts have it.
+  #
+  # Without one, tailscaled runs as an unprivileged user daemon in
+  # userspace-networking mode (no tun, no root), state and socket under the
+  # XDG state dir. `tailscale serve` still works there, since tailscaled
+  # terminates those connections itself, but outbound connections to other
+  # tailnet hosts do not: the OS has no route to 100.64.0.0/10.
   # The socket path must stay under ~104 bytes (macOS sun_path).
   tailscaleDir = "${config.xdg.stateHome}/tailscale";
   tailscaleSocket = "${tailscaleDir}/tailscaled.sock";
-  # The CLI has no env var for the socket, only the root `--socket` flag.
+  # Unit files a system tailscaled installs: nix-darwin and
+  # `tailscaled install-system-daemon` share the label com.tailscale.tailscaled;
+  # NixOS links its unit into /etc, distro packages ship it under /usr/lib.
+  tailscaleSystemUnits =
+    if isDarwin then
+      [ "/Library/LaunchDaemons/com.tailscale.tailscaled.plist" ]
+    else
+      [
+        "/etc/systemd/system/tailscaled.service"
+        "/usr/lib/systemd/system/tailscaled.service"
+        "/lib/systemd/system/tailscaled.service"
+      ];
+  hasSystemTailscaled = lib.concatMapStringsSep " || "
+    (f: "[ -e ${lib.escapeShellArg f} ]") tailscaleSystemUnits;
+  # The CLI has no env var for the socket, only the root `--socket` flag, so
+  # the wrapper adds it unless a system daemon owns the default socket.
   # tailscale and tailscaled are one binary that picks its role from argv[0],
-  # so wrap the original bin/tailscale path instead of using wrapProgram,
-  # which would rename it to .tailscale-wrapped and start the daemon.
+  # so replace bin/tailscale with a script that execs the original path,
+  # rather than wrapProgram, whose .tailscale-wrapped would start the daemon.
   tailscale = pkgs.symlinkJoin {
     name = "tailscale-user-${pkgs.tailscale.version}";
     paths = [ pkgs.tailscale ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       rm $out/bin/tailscale
-      makeWrapper ${pkgs.tailscale}/bin/tailscale $out/bin/tailscale \
-        --add-flags ${lib.escapeShellArg "--socket=${tailscaleSocket}"}
+      cat > $out/bin/tailscale <<'EOS'
+      #!${pkgs.runtimeShell}
+      if ${hasSystemTailscaled}; then
+        exec ${pkgs.tailscale}/bin/tailscale "$@"
+      fi
+      exec ${pkgs.tailscale}/bin/tailscale ${lib.escapeShellArg "--socket=${tailscaleSocket}"} "$@"
+      EOS
+      chmod +x $out/bin/tailscale
     '';
   };
   tailscaledArgs = [
@@ -180,21 +207,34 @@ in {
     Install.WantedBy = [ "default.target" ];
   };
 
-  # tailscaled, see `tailscale` in the let block. Unlike tuios, it runs from a
-  # store path on purpose: a switch that bumps tailscale should restart it
-  # onto the new binary, which only blips the tailnet for a second.
+  # The user tailscaled, see `tailscale` in the let block. It stands down
+  # when a system daemon is installed: two daemons would be two tailnet
+  # nodes. Unlike tuios, it runs from a store path on purpose: a switch that
+  # bumps tailscale should restart it onto the new binary, which only blips
+  # the tailnet for a second.
+  #
+  # launchd has no start condition on a path's absence, so the agent exits 0
+  # instead, and KeepAlive restarts it only on a non-zero exit.
   launchd.agents.tailscaled = lib.mkIf isDarwin {
     enable = true;
     config = {
-      ProgramArguments = tailscaledArgs;
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        "if ${hasSystemTailscaled}; then exit 0; fi; exec ${lib.escapeShellArgs tailscaledArgs}"
+      ];
       RunAtLoad = true;
-      KeepAlive = true;
+      KeepAlive.SuccessfulExit = false;
       StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/tailscaled.log";
     };
   };
 
   systemd.user.services.tailscaled = lib.mkIf (!isDarwin) {
-    Unit.Description = "Tailscale daemon (userspace networking)";
+    Unit = {
+      Description = "Tailscale daemon (userspace networking)";
+      # Conditions of one type are ANDed: run only if none of them exists.
+      ConditionPathExists = map (f: "!${f}") tailscaleSystemUnits;
+    };
     Service = {
       ExecStart = lib.escapeShellArgs tailscaledArgs;
       Restart = "always";
